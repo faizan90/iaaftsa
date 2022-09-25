@@ -1210,13 +1210,13 @@ class IAAFTSARealization(GTGAlgRealization):
 
             data[data == 0] = np.nan  # Something like temperature needs this.
 
-            rand_err_cnst_incs = np.nanmin(np.abs(data)).min(axis=0)
+            rand_err_rel = np.random.random(self._data_ref_shape)
+
+            rand_err_cnst_incs = np.nanmin(np.abs(data), axis=0)
 
             rand_err_cnst = -rand_err_cnst_incs + (
                 (2.0 * rand_err_cnst_incs) *
-                np.random.random(self._data_ref_shape))
-
-            rand_err_rel = np.random.random(self._data_ref_shape)
+                rand_err_rel)
 
             opt_vars_cls.asymms_rand_errs = asymms_rand_errs.copy(order='f')
             opt_vars_cls.rand_err_cnst = rand_err_cnst.copy(order='f')
@@ -1274,6 +1274,9 @@ class IAAFTSARealization(GTGAlgRealization):
         if False:
             self._run_iaaft(opt_vars_cls, True)
 
+            self._rs.data_init = self._rs.data.copy(order='f')
+            self._rs.probs_init = self._rs.probs.copy(order='f')
+
         self._update_sim_no_prms()
         return
 
@@ -1304,6 +1307,8 @@ class IAAFTSARealization(GTGAlgRealization):
                 data[:, i] = self._data_ref_rltzn_srtd[rand_idxs, i]
 
             probs = self._get_probs(data, True)
+
+            iaaft_n_iters = self._rs.shape[1]
 
             # opt_vars_cls.mxn_ratio_margss[:] = 1.0
             # opt_vars_cls.mxn_ratio_probss[:] = 0.0

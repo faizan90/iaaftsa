@@ -14,9 +14,7 @@ from gnrctsgenr import (
     GTGAlgLagNthWts,
     GTGAlgLabelWts,
     GTGAlgAutoObjWts,
-    )
-
-from ...misc import ret_mp_idxs
+    ret_mp_idxs)
 
 
 class IAAFTSAAlgLagNthWts(GTGAlgLagNthWts):
@@ -109,7 +107,9 @@ class IAAFTSAAlgAutoObjWts(GTGAlgAutoObjWts):
 
             obj_wts_gen = (
                 (
-                (mp_idxs[i], mp_idxs[i + 1], opt_vars_cls),
+                mp_idxs[i],
+                mp_idxs[i + 1],
+                opt_vars_cls,
                 )
                 for i in range(mp_idxs.size - 1))
 

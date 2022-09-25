@@ -134,7 +134,7 @@ def main():
     # in_file_path = Path(
     #     r'neckar_q_data_combined_20180713_10cps.csv')
 
-    sim_label = 'test_maiden_436'  # next:
+    sim_label = 'test_maiden_439'  # next:
 
     labels = ['420']  # , '3421']  # , 'cp']  #, '427'
 
@@ -232,8 +232,8 @@ def main():
     match_probs_ms_pair_ft_flag = True
 
     scorr_flag = False
-    asymm_type_1_flag = False
-    asymm_type_2_flag = False
+    # asymm_type_1_flag = False
+    # asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -244,12 +244,12 @@ def main():
     ecop_dens_ms_flag = False
     # match_data_ft_flag = False
     # match_probs_ft_flag = False
-    # asymm_type_1_ft_flag = False
-    # asymm_type_2_ft_flag = False
-    # nth_order_ft_flag = False
+    asymm_type_1_ft_flag = False
+    asymm_type_2_ft_flag = False
+    nth_order_ft_flag = False
     asymm_type_1_ms_ft_flag = False
     asymm_type_2_ms_ft_flag = False
-    # etpy_ft_flag = False
+    etpy_ft_flag = False
     etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
@@ -274,7 +274,7 @@ def main():
 
     mixing_ratio_reduction_rate_type = 3
     mixing_ratio_reduction_rate_min = 1e-4
-    iaaft_n_iterations_max = 10  # This can be an optimization parameter.
+    iaaft_n_iterations_max = 15  # This can be an optimization parameter.
 
     use_asymmetrize_function_flag = True
     # use_asymmetrize_function_flag = False
@@ -287,10 +287,23 @@ def main():
     prob_center_bds = (0.0, 1.0)
     pre_val_exp_bds = (0.0, 5.05)
     crt_val_exp_bds = (0.0, 5.05)
-    level_thresh_cnst_bds = (-100000, +100000)
+    level_thresh_cnst_bds = (0, +100001)
     level_thresh_slp_bds = (-100000.0, +100000.0)
     rand_err_sclr_cnst_bds = (-3.5, +3.5)
     rand_err_sclr_rel_bds = (-1.0, +1.0)
+
+    # n_levels_bds = (0, 100)
+    # max_shift_exp_bds = (0.99, 1.01)
+    # max_shift_bds = (0, 2)
+    # pre_values_ratio_bds = (0.0, 1.0)
+    # asymmetrize_iterations_bds = (1, 3)
+    # prob_center_bds = (0.0, 0.0)
+    # pre_val_exp_bds = (0.99, 1.01)
+    # crt_val_exp_bds = (0.99, 1.01)
+    # level_thresh_cnst_bds = (-1000000, -1000000)
+    # level_thresh_slp_bds = (0.0, 0.0)
+    # rand_err_sclr_cnst_bds = (-0.1, +0.1)
+    # rand_err_sclr_rel_bds = (-0.01, +0.01)
 
     # weights = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.005], dtype=np.float64)
     # auto_wts_set_flag = False
