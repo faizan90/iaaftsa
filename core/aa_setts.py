@@ -27,7 +27,7 @@ class IAAFTSASettings(GTGSettings):
         self._sett_ann_iaaft_n_iters = None
 
         # Asymmetrize.
-        self._sett_asymm_types = (1, 2)
+        self._sett_asymm_types = (2,)
         self._sett_asymm_type = None
         self._sett_asymm_n_levels_lbd = None
         self._sett_asymm_n_levels_ubd = None
@@ -39,8 +39,20 @@ class IAAFTSASettings(GTGSettings):
         self._sett_asymm_pre_vals_ratio_ubd = None
         self._sett_asymm_n_iters_lbd = None
         self._sett_asymm_n_iters_ubd = None
-        self._sett_asymm_prob_center_lbd = 0.0
-        self._sett_asymm_prob_center_ubd = 1.0
+        self._sett_asymm_prob_center_lbd = None
+        self._sett_asymm_prob_center_ubd = None
+        self._sett_asymm_pre_val_exp_lbd = None
+        self._sett_asymm_pre_val_exp_ubd = None
+        self._sett_asymm_crt_val_exp_lbd = None
+        self._sett_asymm_crt_val_exp_ubd = None
+        self._sett_asymm_level_thresh_cnst_lbd = None
+        self._sett_asymm_level_thresh_cnst_ubd = None
+        self._sett_asymm_level_thresh_slp_lbd = None
+        self._sett_asymm_level_thresh_slp_ubd = None
+        self._sett_asymm_rand_err_sclr_cnst_lbd = None
+        self._sett_asymm_rand_err_sclr_cnst_ubd = None
+        self._sett_asymm_rand_err_sclr_rel_lbd = None
+        self._sett_asymm_rand_err_sclr_rel_ubd = None
 
         # Preserve coefficients.
         self._sett_prsrv_coeffs_min_prd = None
@@ -173,7 +185,14 @@ class IAAFTSASettings(GTGSettings):
             max_shift_exp_bds,
             max_shift_bds,
             pre_values_ratio_bds,
-            asymmetrize_iterations_bds):
+            asymmetrize_iterations_bds,
+            prob_center_bds,
+            pre_val_exp_bds,
+            crt_val_exp_bds,
+            level_thresh_cnst_bds,
+            level_thresh_slp_bds,
+            rand_err_sclr_cnst_bds,
+            rand_err_sclr_rel_bds):
 
         f'''
         Specify the parameter bounds for the asymmetrize function that is
@@ -213,6 +232,20 @@ class IAAFTSASettings(GTGSettings):
             The number of times a series is passed through the asymmetrizing
             function. The more this number the smoother the series gets.
             Both should be more than zero.
+        prob_center_bds : list or tuple of two floats
+            At which F(x) value to take the lowest level. Should be between
+            0 and 1, including.
+        pre_val_exp_bds : list or tuple of two floats
+            The exponent to which a current value is raise before it is
+            multiplied by pre_values_ratio. The mismatch between pre_val_exp
+            and crt_val_exp allows for an asymmetric simulation around a
+            value. Should be a valid real number equal to or greater than
+            zero. The simulation applies the cabs function to take the
+            absolute in case resulting value is a complex number. The sign
+            is maintained.
+        crt_val_exp_bds : list or tuple of two floats
+            Same as pre_val_exp_bds but is current value is raised to this
+            exponent and then muliplied by 1 - pre_values_ratio.
         '''
 
         if self._vb:
@@ -236,7 +269,7 @@ class IAAFTSASettings(GTGSettings):
         assert all([isinstance(n_level, int) for n_level in n_levels_bds]), (
             'All values in n_levels_bds must be integers!')
 
-        assert n_levels_bds[0] > 0, 'Invalid value of n_level lower bounds!'
+        assert n_levels_bds[0] >= 0, 'Invalid value of n_level lower bounds!'
 
         assert n_levels_bds[1] >= n_levels_bds[0], (
             'Values in n_levels_bds must be ascending!')
@@ -252,7 +285,7 @@ class IAAFTSASettings(GTGSettings):
                     for max_shift_exp in max_shift_exp_bds]), (
             'All values in max_shift_exp_bds must be floats!')
 
-        assert max_shift_exp_bds[0] > 0, (
+        assert max_shift_exp_bds[0] >= 0, (
             'Invalid value of max_shift_exp lower bounds!')
 
         assert max_shift_exp_bds[1] >= max_shift_exp_bds[0], (
@@ -320,6 +353,137 @@ class IAAFTSASettings(GTGSettings):
                 asymmetrize_iterations_bds[0]), (
             'Values in asymmetrize_iterations_bds must be ascending!')
 
+        # prob_center_bds.
+        assert isinstance(prob_center_bds, (list, tuple)), (
+            'prob_center_bds not a list or a tuple!')
+
+        assert len(prob_center_bds) == 2, (
+            'prob_center_bds must have two elements only!')
+
+        assert all([isinstance(prob_center, float)
+                    for prob_center in prob_center_bds]), (
+            'All values in prob_center_bds must be floats!')
+
+        assert prob_center_bds[0] >= 0, (
+            'Invalid value of prob_center lower bounds!')
+
+        assert prob_center_bds[1] >= prob_center_bds[0], (
+            'Values in n_levels_bds must be ascending!')
+
+        assert prob_center_bds[1] <= 1.0, (
+            'Invalid value of prob_center upper bounds!')
+
+        # pre_val_exp_bds.
+        assert isinstance(pre_val_exp_bds, (list, tuple)), (
+            'pre_val_exp_bds not a list or a tuple!')
+
+        assert len(pre_val_exp_bds) == 2, (
+            'pre_val_exp_bds must have two elements only!')
+
+        assert all([isinstance(pre_val_exp_bd, float)
+                    for pre_val_exp_bd in pre_val_exp_bds]), (
+            'All values in pre_val_exp_bds must be floats!')
+
+        assert all([np.isfinite(pre_val_exp_bd)
+                    for pre_val_exp_bd in pre_val_exp_bds]), (
+            'All values in pre_val_exp_bds must be finite!')
+
+        assert pre_val_exp_bds[0] >= 0, (
+            'Invalid value of lower bound in pre_val_exps!')
+
+        assert pre_val_exp_bds[0] <= pre_val_exp_bds[1], (
+            'Values in pre_val_exp_bds must be ascending!')
+
+        # crt_val_exp_bds.
+        assert isinstance(crt_val_exp_bds, (list, tuple)), (
+            'crt_val_exp_bds not a list or a tuple!')
+
+        assert len(crt_val_exp_bds) == 2, (
+            'crt_val_exp_bds must have two elements only!')
+
+        assert all([isinstance(crt_val_exp_bd, float)
+                    for crt_val_exp_bd in crt_val_exp_bds]), (
+            'All values in crt_val_exp_bds must be floats!')
+
+        assert all([np.isfinite(crt_val_exp_bd)
+                    for crt_val_exp_bd in crt_val_exp_bds]), (
+            'All values in crt_val_exp_bds must be finite!')
+
+        assert crt_val_exp_bds[0] >= 0, (
+            'Invalid value of lower bound in crt_val_exps!')
+
+        assert crt_val_exp_bds[0] <= crt_val_exp_bds[1], (
+            'Values in crt_val_exp_bds must be ascending!')
+
+        # level_thresh_cnst_bds.
+        assert isinstance(level_thresh_cnst_bds, (list, tuple)), (
+            'level_thresh_cnst_bds not a list or a tuple!')
+
+        assert len(level_thresh_cnst_bds) == 2, (
+            'level_thresh_cnst_bds must have two elements only!')
+
+        assert all([isinstance(level_thresh_cnst, int)
+                    for level_thresh_cnst in level_thresh_cnst_bds]), (
+            'All values in level_thresh_cnst_bds must be integers!')
+
+        assert level_thresh_cnst_bds[1] >= level_thresh_cnst_bds[0], (
+            'Values in level_thresh_cnst_bds must be ascending!')
+
+        # level_thresh_slp_bds.
+        assert isinstance(level_thresh_slp_bds, (list, tuple)), (
+            'level_thresh_slp_bds not a list or a tuple!')
+
+        assert len(level_thresh_slp_bds) == 2, (
+            'level_thresh_slp_bds must have two elements only!')
+
+        assert all([isinstance(level_thresh_slp_bd, float)
+                    for level_thresh_slp_bd in level_thresh_slp_bds]), (
+            'All values in level_thresh_slp_bds must be floats!')
+
+        assert all([np.isfinite(level_thresh_slp_bd)
+                    for level_thresh_slp_bd in level_thresh_slp_bds]), (
+            'All values in level_thresh_slp_bds must be finite!')
+
+        assert level_thresh_slp_bds[0] <= level_thresh_slp_bds[1], (
+            'Values in level_thresh_slp_bds must be ascending!')
+
+        # rand_err_sclr_cnst_bds.
+        assert isinstance(rand_err_sclr_cnst_bds, (list, tuple)), (
+            'rand_err_sclr_cnst_bds not a list or a tuple!')
+
+        assert len(rand_err_sclr_cnst_bds) == 2, (
+            'rand_err_sclr_cnst_bds must have two elements only!')
+
+        assert all([isinstance(rand_err_sclr_cnst_bd, float)
+                    for rand_err_sclr_cnst_bd in rand_err_sclr_cnst_bds]), (
+            'All values in rand_err_sclr_cnst_bds must be floats!')
+
+        assert all([np.isfinite(rand_err_sclr_cnst_bd)
+                    for rand_err_sclr_cnst_bd in rand_err_sclr_cnst_bds]), (
+            'All values in rand_err_sclr_cnst_bds must be finite!')
+
+        assert rand_err_sclr_cnst_bds[0] <= rand_err_sclr_cnst_bds[1], (
+            'Values in rand_err_sclr_cnst_bds must be ascending!')
+
+        # rand_err_sclr_rel_bds.
+        assert isinstance(rand_err_sclr_rel_bds, (list, tuple)), (
+            'rand_err_sclr_rel_bds not a list or a tuple!')
+
+        assert len(rand_err_sclr_rel_bds) == 2, (
+            'rand_err_sclr_rel_bds must have two elements only!')
+
+        assert all([isinstance(rand_err_sclr_rel_bd, float)
+                    for rand_err_sclr_rel_bd in rand_err_sclr_rel_bds]), (
+            'All values in rand_err_sclr_rel_bds must be floats!')
+
+        assert all([np.isfinite(rand_err_sclr_rel_bd)
+                    for rand_err_sclr_rel_bd in rand_err_sclr_rel_bds]), (
+            'All values in rand_err_sclr_rel_bds must be finite!')
+
+        assert rand_err_sclr_rel_bds[0] <= rand_err_sclr_rel_bds[1], (
+            'Values in rand_err_sclr_rel_bds must be ascending!')
+
+        # Set all values.
         self._sett_asymm_type = asymmetrize_type
 
         self._sett_asymm_n_levels_lbd = n_levels_bds[0]
@@ -336,6 +500,27 @@ class IAAFTSASettings(GTGSettings):
 
         self._sett_asymm_n_iters_lbd = asymmetrize_iterations_bds[0]
         self._sett_asymm_n_iters_ubd = asymmetrize_iterations_bds[1]
+
+        self._sett_asymm_prob_center_lbd = prob_center_bds[0]
+        self._sett_asymm_prob_center_ubd = prob_center_bds[1]
+
+        self._sett_asymm_pre_val_exp_lbd = pre_val_exp_bds[0]
+        self._sett_asymm_pre_val_exp_ubd = pre_val_exp_bds[1]
+
+        self._sett_asymm_crt_val_exp_lbd = crt_val_exp_bds[0]
+        self._sett_asymm_crt_val_exp_ubd = crt_val_exp_bds[1]
+
+        self._sett_asymm_level_thresh_cnst_lbd = level_thresh_cnst_bds[0]
+        self._sett_asymm_level_thresh_cnst_ubd = level_thresh_cnst_bds[1]
+
+        self._sett_asymm_level_thresh_slp_lbd = level_thresh_slp_bds[0]
+        self._sett_asymm_level_thresh_slp_ubd = level_thresh_slp_bds[1]
+
+        self._sett_asymm_rand_err_sclr_cnst_lbd = rand_err_sclr_cnst_bds[0]
+        self._sett_asymm_rand_err_sclr_cnst_ubd = rand_err_sclr_cnst_bds[1]
+
+        self._sett_asymm_rand_err_sclr_rel_lbd = rand_err_sclr_rel_bds[0]
+        self._sett_asymm_rand_err_sclr_rel_ubd = rand_err_sclr_rel_bds[1]
 
         if self._vb:
             print('Asymmetrize type:', self._sett_asymm_type)
@@ -364,6 +549,41 @@ class IAAFTSASettings(GTGSettings):
                 'Number of asymmetrize calls\' bounds:',
                 self._sett_asymm_n_iters_lbd,
                 self._sett_asymm_n_iters_ubd)
+
+            print(
+                'Probability center\'s bounds:',
+                self._sett_asymm_prob_center_lbd,
+                self._sett_asymm_prob_center_ubd)
+
+            print(
+                'Previous values exponent\'s bounds:',
+                self._sett_asymm_pre_val_exp_lbd,
+                self._sett_asymm_pre_val_exp_ubd)
+
+            print(
+                'Current values exponent\'s bounds:',
+                self._sett_asymm_crt_val_exp_lbd,
+                self._sett_asymm_crt_val_exp_ubd)
+
+            print(
+                'Level threshold constant\'s bounds:',
+                self._sett_asymm_level_thresh_cnst_lbd,
+                self._sett_asymm_level_thresh_cnst_ubd)
+
+            print(
+                'Level threshold slope\'s bounds:',
+                self._sett_asymm_level_thresh_slp_lbd,
+                self._sett_asymm_level_thresh_slp_ubd)
+
+            print(
+                'Random error scaler constant\'s bounds:',
+                self._sett_asymm_rand_err_sclr_cnst_lbd,
+                self._sett_asymm_rand_err_sclr_cnst_ubd)
+
+            print(
+                'Random error scaler relative\'s bounds:',
+                self._sett_asymm_rand_err_sclr_rel_lbd,
+                self._sett_asymm_rand_err_sclr_rel_ubd)
 
             print_el()
 

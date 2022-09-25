@@ -32,8 +32,51 @@ class IAAFTSAPrepareRltznSim(GTGPrepareRltznSim):
 
         GTGPrepareRltznSim.__init__(self)
 
-        self.init_data = None
-        self.init_probs = None
+        # Init random data that is shuffled everytime.
+        self.data_init = None
+        self.probs_init = None
+
+        # For IAAFT.
+        self.mxn_ratio_margss = None
+        self.mxn_ratio_probss = None
+
+        # For asymmetrize.
+        self.n_levelss = None
+        self.max_shift_exps = None
+        self.max_shifts = None
+        self.pre_vals_ratios = None
+        self.asymm_n_iterss = None
+        self.asymms_rand_errs = None
+        self.prob_centers = None
+        self.pre_val_exps = None
+        self.crt_val_exps = None
+        self.level_thresh_cnsts = None
+        self.level_thresh_slps = None
+        self.rand_err_sclr_cnsts = None
+        self.rand_err_sclr_rels = None
+        self.rand_err_cnst = None
+        self.rand_err_rel = None
+
+        # For IAAFT convergence monitoring.
+        self.order_sdiffs = None
+
+        # Final best values.
+        self.mxn_ratio_margss_best = None
+        self.mxn_ratio_probss_best = None
+        self.n_levelss_best = None
+        self.max_shift_exps_best = None
+        self.max_shifts_best = None
+        self.pre_vals_ratios_best = None
+        self.asymm_n_iterss_best = None
+        self.prob_centers_best = None
+        self.pre_val_exps_best = None
+        self.crt_val_exps_best = None
+        self.level_thresh_cnsts_best = None
+        self.level_thresh_slps_best = None
+        self.rand_err_sclr_cnsts_best = None
+        self.rand_err_sclr_rels_best = None
+        self.rand_err_cnst_best = None
+        self.rand_err_rel_best = None
         return
 
 
@@ -77,15 +120,13 @@ class IAAFTSAPrepareTfms(GTGPrepareTfms):
 
     def _get_shuffle_ser_ft(self):
 
-        data = self._rr.data.copy()
-
-        data_sorted = np.sort(data, axis=0)
+        data = np.empty_like(self._rr.data)
 
         for i in range(data.shape[1]):
             rand_idxs = np.argsort(np.argsort(
                 np.random.random(size=data.shape[0])))
 
-            data[:, i] = data_sorted[rand_idxs, i]
+            data[:, i] = self._data_ref_rltzn_srtd[rand_idxs, i]
 
         ft = np.fft.rfft(data, axis=0)
         return ft

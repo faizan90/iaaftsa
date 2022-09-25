@@ -75,7 +75,7 @@ class IAAFTSAPlot(
 
         best_rltzn_labs = self._get_best_obj_vals_srtd_sim_labs(sim_grp_main)
 
-        plt.figure()
+        asymm_set_flag = bool(h5_hdl['flags'].attrs['sett_asymm_set_flag'])
 
         plt.figure()
         for data_lab_idx in loop_prod:
@@ -107,9 +107,6 @@ class IAAFTSAPlot(
 
             plot_ctr = 0
             for rltzn_lab in best_rltzn_labs:
-                iaaft_ts_data = sim_grp_main[
-                    f'{rltzn_lab}/init_data'][:, data_lab_idx]
-
                 final_ts_data = sim_grp_main[
                     f'{rltzn_lab}/data'][:, data_lab_idx]
 
@@ -120,13 +117,6 @@ class IAAFTSAPlot(
                     lw=plt_sett.lw_1,
                     label='final')
 
-                plt.plot(
-                    iaaft_ts_data,
-                    alpha=plt_sett.alpha_1,
-                    color=plt_sett.lc_1,
-                    lw=plt_sett.lw_1,
-                    label='init')
-
                 plt.grid(True)
 
                 plt.gca().set_axisbelow(True)
@@ -135,6 +125,66 @@ class IAAFTSAPlot(
 
                 plt.ylabel('Magnitude')
                 plt.xlabel('Time step')
+
+                title_str = ''
+
+                if asymm_set_flag:
+                    title_str += 'mxn_ratio_margs: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/mxn_ratio_margss_best'][data_lab_idx]
+
+                    title_str += 'mxn_ratio_probs: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/mxn_ratio_probss_best'][data_lab_idx]
+
+                    title_str += 'n_levels: %d\n' % sim_grp_main[
+                        f'{rltzn_lab}/n_levelss_best'][data_lab_idx]
+
+                    title_str += 'max_shift_exp: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/max_shift_exps_best'][data_lab_idx]
+
+                    title_str += 'max_shift: %d | ' % sim_grp_main[
+                        f'{rltzn_lab}/max_shifts_best'][data_lab_idx]
+
+                    title_str += 'pre_vals_ratio: %0.3E\n' % sim_grp_main[
+                        f'{rltzn_lab}/pre_vals_ratios_best'][data_lab_idx]
+
+                    title_str += 'asymm_n_iters: %d | ' % sim_grp_main[
+                        f'{rltzn_lab}/asymm_n_iterss_best'][data_lab_idx]
+
+                    title_str += 'prob_center: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/prob_centers_best'][data_lab_idx]
+
+                    title_str += 'pre_val_exp: %0.3E\n' % sim_grp_main[
+                        f'{rltzn_lab}/pre_val_exps_best'][data_lab_idx]
+
+                    title_str += 'crt_val_exp: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/crt_val_exps_best'][data_lab_idx]
+
+                    title_str += 'level_thresh_cnst: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/level_thresh_cnsts_best'][data_lab_idx]
+
+                    title_str += 'level_thresh_slp: %0.3E\n' % sim_grp_main[
+                        f'{rltzn_lab}/level_thresh_slps_best'][data_lab_idx]
+
+                    title_str += 'rand_err_sclr_cnst: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/rand_err_sclr_cnsts_best'][data_lab_idx]
+
+                    title_str += 'rand_err_sclr_rel: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/rand_err_sclr_rels_best'][data_lab_idx]
+
+                    title_str += 'obj_val_min: %0.3E' % sim_grp_main[
+                        f'{rltzn_lab}/obj_vals_min'][-1]
+
+                else:
+                    title_str += 'mxn_ratio_margs: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/mxn_ratio_margss_best'][data_lab_idx]
+
+                    title_str += 'mxn_ratio_probs: %0.3E | ' % sim_grp_main[
+                        f'{rltzn_lab}/mxn_ratio_probss_best'][data_lab_idx]
+
+                    title_str += 'obj_val_min: %0.3E' % sim_grp_main[
+                        f'{rltzn_lab}/obj_vals_min'][-1]
+
+                plt.title(title_str + '\n')
 
                 fig_name = (
                     f'{out_name_pref}_{data_labels[data_lab_idx]}_'
@@ -289,6 +339,162 @@ class IAAFTSAPlot(
                 f'took {end_tm - beg_tm:0.2f} seconds.')
         return
 
+    def _plot_iaaftsa_prms(self, vname, xlabel, fname, tlabel):
+
+        beg_tm = default_timer()
+
+        h5_hdl = h5py.File(self._plt_in_h5_file, mode='r', driver=None)
+
+        plt_sett = self._plt_sett_phs_red_rates
+
+        new_mpl_prms = plt_sett.prms_dict
+
+        old_mpl_prms = get_mpl_prms(new_mpl_prms.keys())
+
+        set_mpl_prms(new_mpl_prms)
+
+        out_name_pref = f'ss__prms_cmpr__{vname}'
+
+        data_labels = tuple(h5_hdl['data_ref'].attrs['data_ref_labels'])
+
+        n_data_labels = h5_hdl['data_ref'].attrs['data_ref_n_labels']
+
+        sim_grp_main = h5_hdl['data_sim_rltzns']
+
+        best_rltzn_lab = self._get_best_obj_vals_srtd_sim_labs(sim_grp_main)[0]
+
+        plt.figure()
+
+        for data_lab_idx in range(n_data_labels):
+
+            for rltzn_lab in sim_grp_main:
+
+                if rltzn_lab == best_rltzn_lab:
+                    continue
+
+                prms = sim_grp_main[f'{rltzn_lab}/{vname}'][:, data_lab_idx]
+
+                plt.plot(
+                    prms,
+                    alpha=plt_sett.alpha_1,
+                    color=plt_sett.lc_1,
+                    lw=plt_sett.lw_1)
+
+            prms = sim_grp_main[f'{best_rltzn_lab}/{vname}'][:, data_lab_idx]
+
+            label = 'best'
+
+            plt.plot(
+                prms,
+                alpha=plt_sett.alpha_3,
+                color=plt_sett.lc_3,
+                lw=plt_sett.lw_3,
+                label=label)
+
+            plt.legend()
+
+            plt.xlabel('Iteration')
+
+            plt.ylabel(f'{xlabel}')
+
+            plt.grid()
+
+            plt.gca().set_axisbelow(True)
+
+            fname = f'{out_name_pref}__{data_labels[data_lab_idx]}.png'
+
+            plt.savefig(str(self._ss_dir / fname), bbox_inches='tight')
+
+            plt.clf()
+
+        plt.close()
+
+        h5_hdl.close()
+
+        set_mpl_prms(old_mpl_prms)
+
+        end_tm = default_timer()
+
+        if self._vb:
+            print(
+                f'Plotting single-site {tlabel} '
+                f'took {end_tm - beg_tm:0.2f} seconds.')
+        return
+
+    def _plot_order_sdiffs(self):
+
+        beg_tm = default_timer()
+
+        h5_hdl = h5py.File(self._plt_in_h5_file, mode='r', driver=None)
+
+        plt_sett = self._plt_sett_phs_red_rates
+
+        new_mpl_prms = plt_sett.prms_dict
+
+        old_mpl_prms = get_mpl_prms(new_mpl_prms.keys())
+
+        set_mpl_prms(new_mpl_prms)
+
+        out_name_pref = f'ss__order_sdiffs'
+
+        sim_grp_main = h5_hdl['data_sim_rltzns']
+
+        best_rltzn_lab = self._get_best_obj_vals_srtd_sim_labs(sim_grp_main)[0]
+
+        plt.figure()
+
+        for rltzn_lab in sim_grp_main:
+
+            if rltzn_lab == best_rltzn_lab:
+                continue
+
+            order_sdiffs = sim_grp_main[f'{rltzn_lab}/order_sdiffs'][:]
+
+            plt.plot(
+                order_sdiffs,
+                alpha=plt_sett.alpha_1,
+                color=plt_sett.lc_1,
+                lw=plt_sett.lw_1)
+
+        order_sdiffs = sim_grp_main[f'{best_rltzn_lab}/order_sdiffs'][:]
+
+        label = 'best'
+
+        plt.plot(
+            order_sdiffs,
+            alpha=plt_sett.alpha_3,
+            color=plt_sett.lc_3,
+            lw=plt_sett.lw_3,
+            label=label)
+
+        plt.legend()
+
+        plt.xlabel('Iteration')
+
+        plt.ylabel(f'Order sdiff')
+
+        plt.grid()
+
+        plt.gca().set_axisbelow(True)
+
+        fname = f'{out_name_pref}.png'
+
+        plt.savefig(str(self._ss_dir / fname), bbox_inches='tight')
+
+        plt.close()
+
+        h5_hdl.close()
+
+        set_mpl_prms(old_mpl_prms)
+
+        end_tm = default_timer()
+
+        if self._vb:
+            print(
+                f'Plotting single-site order_sdiffs '
+                f'took {end_tm - beg_tm:0.2f} seconds.')
+        return
+
     def plot(self):
 
         if self._vb:
@@ -304,53 +510,95 @@ class IAAFTSAPlot(
 
         # Variables specific to IAAFTSA.
         if self._plt_osv_flag:
+
+            h5_hdl = h5py.File(self._plt_in_h5_file, mode='r', driver=None)
+
+            asymm_set_flag = bool(h5_hdl['flags'].attrs['sett_asymm_set_flag'])
+
+            h5_hdl.close()
+
             ftns_args.extend([
                 (self._plot_osv_iaaftsa,
                  ('mxn_ratio_red_rates',
                   'Mixing ratio increment reduction rate',
                   'mxn_ratio_red_rates',
                   'mixing reduction reduction rates')),
-                (self._plot_osv_iaaftsa,
+                (self._plot_iaaftsa_prms,
                  ('mxn_ratios_probs',
                   'Probability series mixing ratio',
                   'mxn_ratios_probs',
                   'probability series mixing ratio')),
-                (self._plot_osv_iaaftsa,
+                (self._plot_iaaftsa_prms,
                  ('mxn_ratios_margs',
                   'Marginals series mixing ratio',
                   'mxn_ratios_margs',
                   'marginals series mixing ratio')),
-                (self._plot_osv_iaaftsa,
-                 ('n_levelss',
-                  'Number of series division levels',
-                  'n_levelss',
-                  'number of series division levels')),
-                (self._plot_osv_iaaftsa,
-                 ('max_shift_exps',
-                  'Maximum step shift exponent',
-                  'max_shift_exps',
-                  'maximum step shift exponent')),
-                (self._plot_osv_iaaftsa,
-                 ('max_shifts',
-                  'Maximum step shifts',
-                  'max_shifts',
-                  'maximum step shifts')),
-                (self._plot_osv_iaaftsa,
-                 ('pre_vals_ratios',
-                  'Step preservation ratio',
-                  'pre_vals_ratios',
-                  'step preservation ratio')),
-                (self._plot_osv_iaaftsa,
-                 ('asymm_n_iterss',
-                  'Asymmetrize function iterations',
-                  'asymm_n_iterss',
-                  'asymmetrize function iterations')),
-                (self._plot_osv_iaaftsa,
-                 ('prob_centers',
-                  'Probability center',
-                  'prob_centers',
-                  'probability center')),
+                (self._plot_order_sdiffs, []),
                 ])
+
+            if asymm_set_flag:
+                ftns_args.extend([
+                    (self._plot_iaaftsa_prms,
+                     ('n_levelss',
+                      'Number of series division levels',
+                      'n_levelss',
+                      'number of series division levels')),
+                    (self._plot_iaaftsa_prms,
+                     ('max_shift_exps',
+                      'Maximum step shift exponent',
+                      'max_shift_exps',
+                      'maximum step shift exponent')),
+                    (self._plot_iaaftsa_prms,
+                     ('max_shifts',
+                      'Maximum step shifts',
+                      'max_shifts',
+                      'maximum step shifts')),
+                    (self._plot_iaaftsa_prms,
+                     ('pre_vals_ratios',
+                      'Step preservation ratio',
+                      'pre_vals_ratios',
+                      'step preservation ratio')),
+                    (self._plot_iaaftsa_prms,
+                     ('asymm_n_iterss',
+                      'Asymmetrize function iterations',
+                      'asymm_n_iterss',
+                      'asymmetrize function iterations')),
+                    (self._plot_iaaftsa_prms,
+                     ('prob_centers',
+                      'Probability center',
+                      'prob_centers',
+                      'probability center')),
+                    (self._plot_iaaftsa_prms,
+                     ('pre_val_exps',
+                      'Previous value exponent',
+                      'pre_val_exps',
+                      'previous value exponent')),
+                    (self._plot_iaaftsa_prms,
+                     ('crt_val_exps',
+                      'Current value exponent',
+                      'crt_val_exps',
+                      'current value exponent')),
+                    (self._plot_iaaftsa_prms,
+                     ('level_thresh_cnsts',
+                      'Level threshold constant',
+                      'level_thresh_cnsts',
+                      'level threshold constant')),
+                    (self._plot_iaaftsa_prms,
+                     ('level_thresh_slps',
+                      'Level threshold slope',
+                      'level_thresh_slps',
+                      'level threshold slope')),
+                    (self._plot_iaaftsa_prms,
+                     ('rand_err_sclr_cnsts',
+                      'Random error scaler constant',
+                      'rand_err_sclr_cnsts',
+                      'random error scaler constant')),
+                    (self._plot_iaaftsa_prms,
+                     ('rand_err_sclr_rels',
+                      'Random error scaler relative',
+                      'rand_err_sclr_rels',
+                      'random error scaler relative')),
+                    ])
 
         self._fill_ss_args_gnrc(ftns_args)
 
