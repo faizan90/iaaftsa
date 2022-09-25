@@ -1612,7 +1612,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
         self._init_iaaft(opt_vars_cls_old)
 
-        old_obj_val = self._get_obj_ftn_val().sum()
+        old_obj_val_indiv = self._get_obj_ftn_val()
+        old_obj_val = old_obj_val_indiv.sum()
 
         init_obj_val = old_obj_val
 
@@ -1739,7 +1740,9 @@ class IAAFTSARealization(GTGAlgRealization):
             old_new_adj_diff = old_new_diff - (
                 self._sett_ann_acpt_thresh * old_obj_val)
 
-            if old_new_adj_diff > 0:
+            if ((old_new_adj_diff > 0) and
+                (new_obj_val_indiv < old_obj_val_indiv).all()):
+
                 accept_flag = True
 
             else:
@@ -1763,6 +1766,8 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_old = opt_vars_cls_new.get_copy()
 
                 old_obj_val = new_obj_val
+
+                old_obj_val_indiv = new_obj_val_indiv.copy()
 
                 self._update_snapshot()
 

@@ -134,7 +134,7 @@ def main():
     # in_file_path = Path(
     #     r'neckar_q_data_combined_20180713_10cps.csv')
 
-    sim_label = 'test_maiden_432'  # next:
+    sim_label = 'test_maiden_436'  # next:
 
     labels = ['420']  # , '3421']  # , 'cp']  #, '427'
 
@@ -232,8 +232,8 @@ def main():
     match_probs_ms_pair_ft_flag = True
 
     scorr_flag = False
-    # asymm_type_1_flag = False
-    # asymm_type_2_flag = False
+    asymm_type_1_flag = False
+    asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -244,12 +244,12 @@ def main():
     ecop_dens_ms_flag = False
     # match_data_ft_flag = False
     # match_probs_ft_flag = False
-    asymm_type_1_ft_flag = False
-    asymm_type_2_ft_flag = False
-    nth_order_ft_flag = False
+    # asymm_type_1_ft_flag = False
+    # asymm_type_2_ft_flag = False
+    # nth_order_ft_flag = False
     asymm_type_1_ms_ft_flag = False
     asymm_type_2_ms_ft_flag = False
-    etpy_ft_flag = False
+    # etpy_ft_flag = False
     etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
@@ -299,7 +299,7 @@ def main():
 
     weights = None
     auto_wts_set_flag = True
-    wts_n_iters = 500
+    wts_n_iters = 1000
     obj_wts_exp = 0.65
 
     min_period = None
