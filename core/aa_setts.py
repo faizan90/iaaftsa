@@ -53,6 +53,8 @@ class IAAFTSASettings(GTGSettings):
         self._sett_asymm_rand_err_sclr_cnst_ubd = None
         self._sett_asymm_rand_err_sclr_rel_lbd = None
         self._sett_asymm_rand_err_sclr_rel_ubd = None
+        self._sett_asymm_probs_exp_lbd = None
+        self._sett_asymm_probs_exp_ubd = None
 
         # Preserve coefficients.
         self._sett_prsrv_coeffs_min_prd = None
@@ -192,7 +194,8 @@ class IAAFTSASettings(GTGSettings):
             level_thresh_cnst_bds,
             level_thresh_slp_bds,
             rand_err_sclr_cnst_bds,
-            rand_err_sclr_rel_bds):
+            rand_err_sclr_rel_bds,
+            probs_exp_bds):
 
         f'''
         Specify the parameter bounds for the asymmetrize function that is
@@ -346,7 +349,7 @@ class IAAFTSASettings(GTGSettings):
                     ]), (
             'All values in asymmetrize_iterations_bds must be integers!')
 
-        assert asymmetrize_iterations_bds[0] >= 1, (
+        assert asymmetrize_iterations_bds[0] >= 0, (
             'Invalid value of asymmetrize_iterations lower bounds!')
 
         assert (asymmetrize_iterations_bds[1] >=
@@ -483,6 +486,24 @@ class IAAFTSASettings(GTGSettings):
         assert rand_err_sclr_rel_bds[0] <= rand_err_sclr_rel_bds[1], (
             'Values in rand_err_sclr_rel_bds must be ascending!')
 
+        # probs_exp_bds.
+        assert isinstance(probs_exp_bds, (list, tuple)), (
+            'probs_exp_bds not a list or a tuple!')
+
+        assert len(probs_exp_bds) == 2, (
+            'probs_exp_bds must have two elements only!')
+
+        assert all([isinstance(probs_exp_bd, float)
+                    for probs_exp_bd in probs_exp_bds]), (
+            'All values in probs_exp_bds must be floats!')
+
+        assert all([np.isfinite(probs_exp_bd)
+                    for probs_exp_bd in probs_exp_bds]), (
+            'All values in probs_exp_bds must be finite!')
+
+        assert probs_exp_bds[0] <= probs_exp_bds[1], (
+            'Values in probs_exp_bds must be ascending!')
+
         # Set all values.
         self._sett_asymm_type = asymmetrize_type
 
@@ -521,6 +542,9 @@ class IAAFTSASettings(GTGSettings):
 
         self._sett_asymm_rand_err_sclr_rel_lbd = rand_err_sclr_rel_bds[0]
         self._sett_asymm_rand_err_sclr_rel_ubd = rand_err_sclr_rel_bds[1]
+
+        self._sett_asymm_probs_exp_lbd = probs_exp_bds[0]
+        self._sett_asymm_probs_exp_ubd = probs_exp_bds[1]
 
         if self._vb:
             print('Asymmetrize type:', self._sett_asymm_type)
@@ -584,6 +608,11 @@ class IAAFTSASettings(GTGSettings):
                 'Random error scaler relative\'s bounds:',
                 self._sett_asymm_rand_err_sclr_rel_lbd,
                 self._sett_asymm_rand_err_sclr_rel_ubd)
+
+            print(
+                'Probability exponent\'s bounds:',
+                self._sett_asymm_probs_exp_lbd,
+                self._sett_asymm_probs_exp_ubd)
 
             print_el()
 

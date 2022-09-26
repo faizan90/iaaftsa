@@ -56,6 +56,7 @@ class IAAFTSAPrepareRltznSim(GTGPrepareRltznSim):
         self.rand_err_sclr_rels = None
         self.rand_err_cnst = None
         self.rand_err_rel = None
+        self.probs_exps = None
 
         # For IAAFT convergence monitoring.
         self.order_sdiffs = None
@@ -77,6 +78,7 @@ class IAAFTSAPrepareRltznSim(GTGPrepareRltznSim):
         self.rand_err_sclr_rels_best = None
         self.rand_err_cnst_best = None
         self.rand_err_rel_best = None
+        self.probs_exp_best = None
         return
 
 
@@ -247,7 +249,7 @@ class IAAFTSAPrepare(GTGPrepare):
         assert self._sett_data_tfm_type == 'data', (
             'self._sett_data_tfm_type can only be \'data\'!')
 
-        if self._sett_asymm_set_flag:
+        if False and self._sett_asymm_set_flag:
             adj_flag = False
             # if self._sett_asymm_n_levels_lbd >= self._data_ref_shape[0]:
             #     self._sett_asymm_n_levels_lbd = self._data_ref_shape[0] - 1

@@ -9,7 +9,7 @@ from timeit import default_timer
 
 import numpy as np
 
-from fcopulas import asymmetrize_type_10_ms_cy
+from fcopulas import asymmetrize_type_11_ms_cy
 
 from gnrctsgenr import (
     GTGBase,
@@ -45,6 +45,7 @@ class OPTVARS:
         self.rand_err_sclr_rels = np.array([], dtype=float)
         self.rand_err_cnst = np.array([], dtype=float)
         self.rand_err_rel = np.array([], dtype=float)
+        self.probs_exps = np.array([], dtype=float)
 
         # After IAAFT is performed. This is needed for later viewing only.
         self.order_sdiff = None
@@ -103,6 +104,9 @@ class OPTVARS:
         opt_vars_cls_new.rand_err_rel = (
             self.rand_err_rel.copy(order='f'))
 
+        opt_vars_cls_new.probs_exps = (
+            self.probs_exps.copy(order='f'))
+
         return opt_vars_cls_new
 
 
@@ -111,6 +115,8 @@ class IAAFTSARealization(GTGAlgRealization):
     def __init__(self):
 
         self._rltzn_prm_max_srch_atpts_flag = False
+
+        self._rltzn_iter_prms_flags = None
 
         GTGAlgRealization.__init__(self)
         return
@@ -121,6 +127,8 @@ class IAAFTSARealization(GTGAlgRealization):
             self._sett_wts_lags_nths_set_flag,
             self._sett_wts_label_set_flag,
             self._sett_wts_obj_auto_set_flag]):
+
+            self._update_iter_prms_flags()
 
             opt_vars_cls_old = OPTVARS()
 
@@ -439,18 +447,23 @@ class IAAFTSARealization(GTGAlgRealization):
                 (opt_vars_cls_old.rand_err_sclr_rels <=
                  self._sett_asymm_rand_err_sclr_rel_ubd).all()), (
                         opt_vars_cls_old.rand_err_sclr_rels)
+
+            assert (
+                (self._sett_asymm_probs_exp_lbd <=
+                 opt_vars_cls_old.probs_exps).all() and
+                (opt_vars_cls_old.probs_exps <=
+                 self._sett_asymm_probs_exp_ubd).all()), (
+                        opt_vars_cls_old.probs_exps)
         #======================================================================
+
+        assert any(self._rltzn_iter_prms_flags), 'No variables to optimize!'
 
         opt_vars_cls_new = opt_vars_cls_old.get_copy()
 
-        n_vars_to_choose_from = 1
+        n_vars_to_choose_from = self._rltzn_iter_prms_flags.size
 
-        if self._sett_asymm_set_flag:
-            if self._sett_asymm_type == 2:
-                n_vars_to_choose_from += 12
-
-            else:
-                raise NotImplementedError
+        updt_vars_idxs = np.arange(n_vars_to_choose_from)[
+            self._rltzn_iter_prms_flags]
 
         max_search_atpts = 1000
         search_atpts = 0
@@ -465,7 +478,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 self._rltzn_prm_max_srch_atpts_flag = True
                 break
 
-            var_to_updt = np.random.choice(np.arange(n_vars_to_choose_from))
+            var_to_updt = np.random.choice(updt_vars_idxs)
 
             # Mixing variables.
             if var_to_updt == 0:
@@ -492,9 +505,7 @@ class IAAFTSARealization(GTGAlgRealization):
 
             # Asymmetrize variables.
             # n_levels.
-            elif (var_to_updt == 1) and (
-                (self._sett_asymm_n_levels_ubd -
-                 self._sett_asymm_n_levels_lbd) > 0):
+            elif (var_to_updt == 1):
 
                 if False:
                     n_levels_probs = [
@@ -527,9 +538,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.n_levelss[col_idx] = n_levels
 
             # max_shift_exp.
-            elif var_to_updt == 2 and (
-                (self._sett_asymm_max_shift_exp_ubd -
-                 self._sett_asymm_max_shift_exp_lbd) > 0):
+            elif var_to_updt == 2:
 
                 if False:
                     max_shift_exp_diff = -0.5 + (1 * np.random.random())
@@ -560,9 +569,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.max_shift_exps[col_idx] = max_shift_exp
 
             # max_shift.
-            elif var_to_updt == 3 and (
-                (self._sett_asymm_max_shift_ubd -
-                 self._sett_asymm_max_shift_lbd) > 0):
+            elif var_to_updt == 3:
 
                 if False:
                     max_shift_probs = [
@@ -595,9 +602,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.max_shifts[col_idx] = max_shift
 
             # pre_vals_ratio.
-            elif var_to_updt == 4 and (
-                (self._sett_asymm_pre_vals_ratio_ubd -
-                 self._sett_asymm_pre_vals_ratio_lbd) > 0):
+            elif var_to_updt == 4:
 
                 if False:
                     ratio_diff_pre_vals = -0.5 + (1 * np.random.random())
@@ -629,9 +634,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.pre_vals_ratios[col_idx] = pre_vals_ratio
 
             # asymm_n_iters
-            elif var_to_updt == 5 and (
-                (self._sett_asymm_n_iters_ubd -
-                 self._sett_asymm_n_iters_lbd) > 0):
+            elif var_to_updt == 5:
 
                 if False:
                     asymm_n_iters_probs = [
@@ -669,9 +672,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.asymm_n_iterss[col_idx] = asymm_n_iters
 
             # prob_center.
-            elif var_to_updt == 6 and (
-                (self._sett_asymm_prob_center_ubd -
-                 self._sett_asymm_prob_center_lbd) > 0):
+            elif var_to_updt == 6:
 
                 if False:
                     diff_pre_vals = -0.5 + (1 * np.random.random())
@@ -700,9 +701,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.prob_centers[col_idx] = prob_center
 
             # pre_val_exp.
-            elif var_to_updt == 7 and (
-                (self._sett_asymm_pre_val_exp_ubd -
-                 self._sett_asymm_pre_val_exp_lbd) > 0):
+            elif var_to_updt == 7:
 
                 if False:
                     diff_pre_vals = -0.5 + (1 * np.random.random())
@@ -731,9 +730,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.pre_val_exps[col_idx] = pre_val_exp
 
             # crt_val_exp.
-            elif var_to_updt == 8 and (
-                (self._sett_asymm_crt_val_exp_ubd -
-                 self._sett_asymm_crt_val_exp_lbd) > 0):
+            elif var_to_updt == 8:
 
                 if False:
                     diff_pre_vals = -0.5 + (1 * np.random.random())
@@ -762,9 +759,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls_new.crt_val_exps[col_idx] = crt_val_exp
 
             # level_thresh_cnst.
-            elif (var_to_updt == 9) and (
-                (self._sett_asymm_level_thresh_cnst_ubd -
-                 self._sett_asymm_level_thresh_cnst_lbd) > 0):
+            elif var_to_updt == 9:
 
                 if False:
                     level_thresh_cnst_probs = [
@@ -805,9 +800,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     level_thresh_cnst)
 
             # level_thresh_slp.
-            elif (var_to_updt == 10) and (
-                (self._sett_asymm_level_thresh_slp_ubd -
-                 self._sett_asymm_level_thresh_slp_lbd) > 0):
+            elif var_to_updt == 10:
 
                 if False:
                     level_thresh_slp_probs = [
@@ -846,9 +839,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     level_thresh_slp)
 
             # rand_err_sclr_cnst
-            elif (var_to_updt == 11) and (
-                (self._sett_asymm_rand_err_sclr_cnst_ubd -
-                 self._sett_asymm_rand_err_sclr_cnst_lbd) > 0):
+            elif var_to_updt == 11:
 
                 if False:
                     rand_err_sclr_cnst_probs = [
@@ -889,9 +880,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     rand_err_sclr_cnst)
 
             # rand_err_sclr_rel
-            elif (var_to_updt == 12) and (
-                (self._sett_asymm_rand_err_sclr_rel_ubd -
-                 self._sett_asymm_rand_err_sclr_rel_lbd) > 0):
+            elif var_to_updt == 12:
 
                 if False:
                     rand_err_sclr_rel_probs = [
@@ -928,6 +917,40 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 opt_vars_cls_new.rand_err_sclr_rels[col_idx] = (
                     rand_err_sclr_rel)
+
+            # probs_exp
+            elif var_to_updt == 13:
+
+                if False:
+                    probs_exp_probs = [
+                        0.5 * mxn_ratio_red_rate,
+                        1.0 - mxn_ratio_red_rate,
+                        0.5 * mxn_ratio_red_rate]
+
+                    probs_exp_diff = np.random.choice(
+                        [-1, 0, 1], p=probs_exp_probs)
+
+                    probs_exp = (
+                        opt_vars_cls_old.probs_exps[col_idx] + probs_exp_diff)
+
+                else:
+                    probs_exp = (
+                        opt_vars_cls_old.probs_exps[col_idx] + (
+                            mxn_ratio_red_rate *
+                            (self._sett_asymm_probs_exp_ubd -
+                             self._sett_asymm_probs_exp_lbd) * (
+                            -0.5 + (1 * np.random.random()))))
+
+                probs_exp = max(self._sett_asymm_probs_exp_lbd, probs_exp)
+
+                probs_exp = min(self._sett_asymm_probs_exp_ubd, probs_exp)
+
+                if opt_vars_cls_old.probs_exps[col_idx] == probs_exp:
+
+                    search_atpts += 1
+                    continue
+
+                opt_vars_cls_new.probs_exps[col_idx] = probs_exp
 
             else:
                 raise NotImplementedError(f'var_to_updt: {var_to_updt}!')
@@ -981,6 +1004,135 @@ class IAAFTSARealization(GTGAlgRealization):
             self._run_iaaft(opt_vars_cls, False)
             self._update_sim_no_prms()
 
+        return
+
+    def _update_iter_prms_flags(self):
+
+        n_vars_to_choose_from = 1
+
+        if self._sett_asymm_set_flag:
+            if self._sett_asymm_type == 2:
+                n_vars_to_choose_from += 13
+
+            else:
+                raise NotImplementedError
+        #======================================================================
+
+        self._rltzn_iter_prms_flags = [True]
+
+        if self._sett_asymm_set_flag:
+            if (self._sett_asymm_n_levels_ubd -
+                self._sett_asymm_n_levels_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_max_shift_exp_ubd -
+                self._sett_asymm_max_shift_exp_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_max_shift_ubd -
+                self._sett_asymm_max_shift_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_pre_vals_ratio_ubd -
+                self._sett_asymm_pre_vals_ratio_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_n_iters_ubd -
+                self._sett_asymm_n_iters_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_prob_center_ubd -
+                self._sett_asymm_prob_center_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_pre_val_exp_ubd -
+                self._sett_asymm_pre_val_exp_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_crt_val_exp_ubd -
+                self._sett_asymm_crt_val_exp_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_level_thresh_cnst_ubd -
+                self._sett_asymm_level_thresh_cnst_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_level_thresh_slp_ubd -
+                self._sett_asymm_level_thresh_slp_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_rand_err_sclr_cnst_ubd -
+                self._sett_asymm_rand_err_sclr_cnst_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_rand_err_sclr_rel_ubd -
+                self._sett_asymm_rand_err_sclr_rel_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+
+            if (self._sett_asymm_probs_exp_ubd -
+                self._sett_asymm_probs_exp_lbd) > 0:
+
+                self._rltzn_iter_prms_flags.append(True)
+
+            else:
+                self._rltzn_iter_prms_flags.append(False)
+        #======================================================================
+
+        assert len(self._rltzn_iter_prms_flags) == n_vars_to_choose_from, (
+            len(self._rltzn_iter_prms_flags), n_vars_to_choose_from)
+
+        self._rltzn_iter_prms_flags = np.array(
+            self._rltzn_iter_prms_flags, dtype=bool)
+
+        assert any(self._rltzn_iter_prms_flags), 'No variables to optimize!'
         return
 
     def _init_iaaft_opt_vars(self, opt_vars_cls, set_mean_flag=False):
@@ -1054,6 +1206,11 @@ class IAAFTSARealization(GTGAlgRealization):
                         self._sett_asymm_rand_err_sclr_rel_ubd -
                         self._sett_asymm_rand_err_sclr_rel_lbd) * 0.5)
 
+                probs_exp = (
+                    self._sett_asymm_probs_exp_lbd + (
+                        self._sett_asymm_probs_exp_ubd -
+                        self._sett_asymm_probs_exp_lbd) * 0.5)
+
                 opt_vars_cls.n_levelss = np.full(
                     self._data_ref_shape[1], n_levels, dtype=np.uint32)
 
@@ -1092,6 +1249,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 opt_vars_cls.rand_err_sclr_rels = np.full(
                     self._data_ref_shape[1], rand_err_sclr_rel,
+                    dtype=np.float64)
+
+                opt_vars_cls.probs_exps = np.full(
+                    self._data_ref_shape[1], probs_exp,
                     dtype=np.float64)
 
         else:
@@ -1188,6 +1349,13 @@ class IAAFTSARealization(GTGAlgRealization):
                         self._sett_asymm_rand_err_sclr_rel_ubd -
                         self._sett_asymm_rand_err_sclr_rel_lbd) * rands)
 
+                rands = np.random.random(size=self._data_ref_shape[1])
+
+                probs_exp = (
+                    self._sett_asymm_probs_exp_lbd + (
+                        self._sett_asymm_probs_exp_ubd -
+                        self._sett_asymm_probs_exp_lbd) * rands)
+
                 opt_vars_cls.n_levelss = n_levels.astype(np.uint32)
                 opt_vars_cls.max_shift_exps = max_shift_exp
                 opt_vars_cls.max_shifts = max_shift.astype(np.int64)
@@ -1201,6 +1369,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 opt_vars_cls.level_thresh_slps = level_thresh_slp
                 opt_vars_cls.rand_err_sclr_cnsts = rand_err_sclr_cnst
                 opt_vars_cls.rand_err_sclr_rels = rand_err_sclr_rel
+                opt_vars_cls.probs_exps = probs_exp
 
         if self._sett_asymm_set_flag:
 
@@ -1216,7 +1385,7 @@ class IAAFTSARealization(GTGAlgRealization):
 
             rand_err_cnst = -rand_err_cnst_incs + (
                 (2.0 * rand_err_cnst_incs) *
-                rand_err_rel)
+                np.random.random(self._data_ref_shape))
 
             opt_vars_cls.asymms_rand_errs = asymms_rand_errs.copy(order='f')
             opt_vars_cls.rand_err_cnst = rand_err_cnst.copy(order='f')
@@ -1237,13 +1406,13 @@ class IAAFTSARealization(GTGAlgRealization):
         crt_val_exps = opt_vars_cls.crt_val_exps
         level_thresh_cnsts = opt_vars_cls.level_thresh_cnsts
         level_thresh_slps = opt_vars_cls.level_thresh_slps
-
         rand_err_sclr_cnsts = opt_vars_cls.rand_err_sclr_cnsts
         rand_err_sclr_rels = opt_vars_cls.rand_err_sclr_rels
         rand_err_cnst = opt_vars_cls.rand_err_cnst
         rand_err_rel = opt_vars_cls.rand_err_rel
+        probs_exps = opt_vars_cls.probs_exps
 
-        out_data = asymmetrize_type_10_ms_cy(
+        out_data = asymmetrize_type_11_ms_cy(
             data,
             probs,
             n_levelss,
@@ -1260,11 +1429,15 @@ class IAAFTSARealization(GTGAlgRealization):
             rand_err_sclr_cnsts,
             rand_err_sclr_rels,
             rand_err_cnst,
-            rand_err_rel)
+            rand_err_rel,
+            probs_exps)
 
         return out_data
 
     def _init_iaaft(self, opt_vars_cls):
+
+        # Start with a scrambled series.
+        self._gen_sim_aux_data()
 
         self._rs.data_init = self._rs.data.copy(order='f')
         self._rs.probs_init = self._rs.probs.copy(order='f')
@@ -1274,10 +1447,14 @@ class IAAFTSARealization(GTGAlgRealization):
         if False:
             self._run_iaaft(opt_vars_cls, True)
 
-            self._rs.data_init = self._rs.data.copy(order='f')
-            self._rs.probs_init = self._rs.probs.copy(order='f')
+            # self._rs.data_init = self._rs.data.copy(order='f')
+            # self._rs.probs_init = self._rs.probs.copy(order='f')
 
         self._update_sim_no_prms()
+
+        # self._rs.data_init = self._rs.data.copy(order='f')
+        # self._rs.probs_init = self._rs.probs.copy(order='f')
+
         return
 
     @GTGBase._timer_wrap
@@ -1291,7 +1468,7 @@ class IAAFTSARealization(GTGAlgRealization):
         phs_spec_data = self._rr.data_ft_coeffs_phss.copy()
         phs_spec_probs = self._rr.probs_ft_coeffs_phss.copy()
 
-        iaaft_n_iters = self._sett_ann_iaaft_n_iters
+        iaaft_n_iters = self._sett_ann_iaaft_n_iters * self._rs.shape[1]
 
         if not plain_iaaft_flag:
             data = self._rs.data_init.copy(order='f')
@@ -1308,7 +1485,7 @@ class IAAFTSARealization(GTGAlgRealization):
 
             probs = self._get_probs(data, True)
 
-            iaaft_n_iters = self._rs.shape[1]
+            # iaaft_n_iters = self._rs.shape[1]
 
             # opt_vars_cls.mxn_ratio_margss[:] = 1.0
             # opt_vars_cls.mxn_ratio_probss[:] = 0.0
@@ -1344,10 +1521,13 @@ class IAAFTSARealization(GTGAlgRealization):
         else:
             readjust_ft_iters = 1
 
+        # j = readjust_ft_iters
         for j in range(readjust_ft_iters):
 
+        # if plain_iaaft_flag:
+
             stn_ctr = 0
-            for i in range(iaaft_n_iters * self._rs.shape[1]):
+            for i in range(iaaft_n_iters):
 
                 sim_ift = np.zeros_like(data)
 
@@ -1601,12 +1781,11 @@ class IAAFTSARealization(GTGAlgRealization):
         if self._data_ref_rltzn.ndim != 2:
             raise NotImplementedError('Implemention for 2D only!')
 
-        # Start with a scrambled series.
-        self._gen_sim_aux_data()
-
         # # IAAFTSA variable.
         # self._rs.data_init = self._rs.data.copy(order='f')
         # self._rs.probs_init = self._rs.probs.copy(order='f')
+
+        self._update_iter_prms_flags()
 
         # IAAFTSA variable.
         # Depends on the number of mixing ratio variables.
@@ -1714,6 +1893,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
             rand_err_sclr_rels = [opt_vars_cls_old.rand_err_sclr_rels.copy()]
 
+            probs_exps = [opt_vars_cls_old.probs_exps.copy()]
+
             order_sdiffs = [opt_vars_cls_old.order_sdiff]
             #==================================================================
 
@@ -1738,6 +1919,9 @@ class IAAFTSARealization(GTGAlgRealization):
             self._update_sim(opt_vars_cls_new, False)
 
             new_obj_val_indiv = self._get_obj_ftn_val()
+
+            # all_imprvd_cdtn = (new_obj_val_indiv < old_obj_val_indiv).all()
+
             new_obj_val = new_obj_val_indiv.sum()
 
             old_new_diff = old_obj_val - new_obj_val
@@ -1745,13 +1929,23 @@ class IAAFTSARealization(GTGAlgRealization):
             old_new_adj_diff = old_new_diff - (
                 self._sett_ann_acpt_thresh * old_obj_val)
 
-            if ((old_new_adj_diff > 0) and
-                (new_obj_val_indiv < old_obj_val_indiv).all()):
+            if old_new_adj_diff > 0:
 
                 accept_flag = True
 
+            # if ((old_new_adj_diff > 0) and all_imprvd_cdtn):
+            #
+            #     accept_flag = True
+            #
+            # elif ((old_new_adj_diff > 0) and (not all_imprvd_cdtn)):
+            #
+            #     accept_flag = False
+
             else:
                 rand_p = np.random.random()
+
+                # Just to be sure.
+                assert old_new_adj_diff <= 0, old_new_adj_diff
 
                 boltz_p = np.exp(old_new_adj_diff / temp)
 
@@ -1760,6 +1954,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 else:
                     accept_flag = False
+
+            # print(accept_flag, old_obj_val, new_obj_val, temp)
 
             if self._alg_force_acpt_flag:
 
@@ -1830,6 +2026,9 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 rand_err_sclr_rels.append(
                     opt_vars_cls_new.rand_err_sclr_rels.copy())
+
+                probs_exps.append(
+                    opt_vars_cls_new.probs_exps.copy())
 
                 order_sdiffs.append(opt_vars_cls_new.order_sdiff)
                 #==============================================================
@@ -2037,6 +2236,8 @@ class IAAFTSARealization(GTGAlgRealization):
             self._rs.rand_err_sclr_rels = np.array(
                 rand_err_sclr_rels, dtype=np.float64)
 
+            self._rs.probs_exps = np.array(probs_exps, dtype=np.float64)
+
             self._rs.order_sdiffs = np.array(order_sdiffs, dtype=np.float64)
 
             self._rs.asymms_rand_errs = (
@@ -2080,6 +2281,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
             self._rs.rand_err_sclr_rels_best = (
                 opt_vars_cls_best.rand_err_sclr_rels)
+
+            self._rs.probs_exps_best = opt_vars_cls_best.probs_exps
             #==================================================================
 
             self._write_cls_rltzn()

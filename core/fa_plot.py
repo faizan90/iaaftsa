@@ -171,6 +171,9 @@ class IAAFTSAPlot(
                     title_str += 'rand_err_sclr_rel: %0.3E | ' % sim_grp_main[
                         f'{rltzn_lab}/rand_err_sclr_rels_best'][data_lab_idx]
 
+                    title_str += 'probs_exp: %0.3E\n' % sim_grp_main[
+                        f'{rltzn_lab}/probs_exps_best'][data_lab_idx]
+
                     title_str += 'obj_val_min: %0.3E' % sim_grp_main[
                         f'{rltzn_lab}/obj_vals_min'][-1]
 
@@ -598,6 +601,11 @@ class IAAFTSAPlot(
                       'Random error scaler relative',
                       'rand_err_sclr_rels',
                       'random error scaler relative')),
+                    (self._plot_iaaftsa_prms,
+                     ('probs_exps',
+                      'Probability exponent',
+                      'probs_exps',
+                      'probability exponent')),
                     ])
 
         self._fill_ss_args_gnrc(ftns_args)

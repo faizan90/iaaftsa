@@ -58,16 +58,16 @@ def main():
 #==============================================================================
 #    Daily HBV sim
 #==============================================================================
-    # in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
-    #
-    # sim_label = 'test_temp_prec_02'  # next:
-    #
-    # labels = 'temp;prec'.split(';')  # pet;q_obs;prec;
-    #
-    # time_fmt = '%Y-%m-%d'
-    #
-    # beg_time = '1964-10-01'
-    # end_time = '1971-11-30'
+    in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
+
+    sim_label = 'test_q_obs_17_data'  # next:
+
+    labels = 'q_obs'.split(';')  # pet;prec;temp;
+
+    time_fmt = '%Y-%m-%d'
+
+    beg_time = '1964-10-01'
+    end_time = '1974-11-30'
 
 #==============================================================================
 #    Daily ppt.
@@ -129,19 +129,19 @@ def main():
 #==============================================================================
 #    Daily discharge.
 #==============================================================================
-    in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
-
-    # in_file_path = Path(
-    #     r'neckar_q_data_combined_20180713_10cps.csv')
-
-    sim_label = 'test_maiden_439'  # next:
-
-    labels = ['420']  # , '3421']  # , 'cp']  #, '427'
-
-    time_fmt = '%Y-%m-%d'
-
-    beg_time = '1963-07-01'
-    end_time = '1973-08-31'
+    # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
+    #
+    # # in_file_path = Path(
+    # #     r'neckar_q_data_combined_20180713_10cps.csv')
+    #
+    # sim_label = 'test_maiden_445'  # next:
+    #
+    # labels = ['420']  # , '3421']  # , 'cp']  #, '427'
+    #
+    # time_fmt = '%Y-%m-%d'
+    #
+    # beg_time = '1963-07-01'
+    # end_time = '1973-08-31'
 
 #==============================================================================
 
@@ -192,15 +192,15 @@ def main():
     # plt_flag = False
 
     long_test_flag = True
-    # long_test_flag = False
+    long_test_flag = False
 
     auto_init_temperature_flag = True
-    # auto_init_temperature_flag = False
+    auto_init_temperature_flag = False
 
     wts_flag = True
     # wts_flag = False
 
-    n_reals = 16  # A multiple of n_cpus.
+    n_reals = 100  # A multiple of n_cpus.
     outputs_dir = main_dir / sim_label
     n_cpus = 'auto'
 
@@ -232,8 +232,8 @@ def main():
     match_probs_ms_pair_ft_flag = True
 
     scorr_flag = False
-    # asymm_type_1_flag = False
-    # asymm_type_2_flag = False
+    asymm_type_1_flag = False
+    asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -244,8 +244,8 @@ def main():
     ecop_dens_ms_flag = False
     # match_data_ft_flag = False
     # match_probs_ft_flag = False
-    asymm_type_1_ft_flag = False
-    asymm_type_2_ft_flag = False
+    # asymm_type_1_ft_flag = False
+    # asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
     asymm_type_1_ms_ft_flag = False
     asymm_type_2_ms_ft_flag = False
@@ -258,14 +258,14 @@ def main():
     match_data_ms_pair_ft_flag = False
     match_probs_ms_pair_ft_flag = False
 
-    lag_steps = np.arange(1, 21)
+    lag_steps = np.arange(1, 31)
     ecop_bins = 25
-    nth_ords = np.arange(1, 6)
-    lag_steps_vld = np.arange(1, 41)
+    nth_ords = np.arange(1, 3)
+    lag_steps_vld = np.arange(1, 51)
     nth_ords_vld = np.arange(1, 6)
 
     use_dists_in_obj_flag = True
-    use_dists_in_obj_flag = False
+    # use_dists_in_obj_flag = False
 
     use_dens_ftn_flag = True
     use_dens_ftn_flag = False
@@ -279,31 +279,33 @@ def main():
     use_asymmetrize_function_flag = True
     # use_asymmetrize_function_flag = False
     asymmetrize_type = 2
-    n_levels_bds = (0, 200)
-    max_shift_exp_bds = (0.0, 100.0)
-    max_shift_bds = (0, 500)
-    pre_values_ratio_bds = (0.0, 1.0)
-    asymmetrize_iterations_bds = (1, 3)
-    prob_center_bds = (0.0, 1.0)
-    pre_val_exp_bds = (0.0, 5.05)
-    crt_val_exp_bds = (0.0, 5.05)
-    level_thresh_cnst_bds = (0, +100001)
-    level_thresh_slp_bds = (-100000.0, +100000.0)
-    rand_err_sclr_cnst_bds = (-3.5, +3.5)
-    rand_err_sclr_rel_bds = (-1.0, +1.0)
+    # n_levels_bds = (0, 200)
+    # max_shift_exp_bds = (0.5, 5.0)
+    # max_shift_bds = (-1000, 1000)
+    # pre_values_ratio_bds = (-0.5, 1.5)
+    # asymmetrize_iterations_bds = (0, 5)
+    # prob_center_bds = (0.0, 1.0)
+    # pre_val_exp_bds = (0.1, 10.05)
+    # crt_val_exp_bds = (0.1, 10.05)
+    # level_thresh_cnst_bds = (0, +1000001)
+    # level_thresh_slp_bds = (-1000000.0, +1000000.0)
+    # rand_err_sclr_cnst_bds = (-10.0, +10.0)
+    # rand_err_sclr_rel_bds = (-0.3, +0.3)
+    # probs_exp_bds = (0.0, 10.0)
 
-    # n_levels_bds = (0, 100)
-    # max_shift_exp_bds = (0.99, 1.01)
-    # max_shift_bds = (0, 2)
-    # pre_values_ratio_bds = (0.0, 1.0)
-    # asymmetrize_iterations_bds = (1, 3)
-    # prob_center_bds = (0.0, 0.0)
-    # pre_val_exp_bds = (0.99, 1.01)
-    # crt_val_exp_bds = (0.99, 1.01)
-    # level_thresh_cnst_bds = (-1000000, -1000000)
-    # level_thresh_slp_bds = (0.0, 0.0)
-    # rand_err_sclr_cnst_bds = (-0.1, +0.1)
-    # rand_err_sclr_rel_bds = (-0.01, +0.01)
+    n_levels_bds = (0, 200)
+    max_shift_exp_bds = (0.95, 1.05)
+    max_shift_bds = (-10, 10)
+    pre_values_ratio_bds = (0.0, 1.0)
+    asymmetrize_iterations_bds = (0, 2)
+    prob_center_bds = (0.0, 0.0)
+    pre_val_exp_bds = (1.0, 1.0)
+    crt_val_exp_bds = (1.0, 1.0)
+    level_thresh_cnst_bds = (1, +1000001)
+    level_thresh_slp_bds = (-1.0, +1.0)
+    rand_err_sclr_cnst_bds = (-5.0, +5.0)
+    rand_err_sclr_rel_bds = (-0.01, +0.01)
+    probs_exp_bds = (0.99, 1.1)
 
     # weights = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.005], dtype=np.float64)
     # auto_wts_set_flag = False
@@ -312,7 +314,7 @@ def main():
 
     weights = None
     auto_wts_set_flag = True
-    wts_n_iters = 1000
+    wts_n_iters = 2000
     obj_wts_exp = 0.65
 
     min_period = None
@@ -393,14 +395,14 @@ def main():
         initial_annealing_temperature = 1e-10
         temperature_reduction_ratio = 0.99
         update_at_every_iteration_no = 501
-        maximum_iterations = 2000  # int(2.5e3)
+        maximum_iterations = 1000  # int(2.5e3)
         maximum_without_change_iterations = maximum_iterations
         objective_tolerance = 1e-15
         objective_tolerance_iterations = maximum_iterations + 1
         stop_acpt_rate = 1e-15
         maximum_iterations_without_updating_best = maximum_iterations + 1
 
-        temperature_lower_bound = 1e0
+        temperature_lower_bound = 1e4
         temperature_upper_bound = 5e9
         n_iterations_per_attempt = update_at_every_iteration_no
         acceptance_lower_bound = 0.6
@@ -503,7 +505,8 @@ def main():
                 level_thresh_cnst_bds,
                 level_thresh_slp_bds,
                 rand_err_sclr_cnst_bds,
-                rand_err_sclr_rel_bds)
+                rand_err_sclr_rel_bds,
+                probs_exp_bds)
 
         iaaftsa_cls.set_internal_data_transform_to_use_settings('data')
 
