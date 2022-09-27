@@ -58,31 +58,31 @@ def main():
 #==============================================================================
 #    Daily HBV sim
 #==============================================================================
-    in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
-
-    sim_label = 'test_q_obs_17_data'  # next:
-
-    labels = 'q_obs'.split(';')  # pet;prec;temp;
-
-    time_fmt = '%Y-%m-%d'
-
-    beg_time = '1964-10-01'
-    end_time = '1974-11-30'
+    # in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
+    #
+    # sim_label = 'test_q_obs_21_data'  # next:
+    #
+    # labels = 'q_obs'.split(';')  # pet;prec;temp;
+    #
+    # time_fmt = '%Y-%m-%d'
+    #
+    # beg_time = '1964-10-01'
+    # end_time = '1974-11-30'
 
 #==============================================================================
 #    Daily ppt.
 #==============================================================================
     # in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
     #
-    # sim_label = 'test_10cps_ppt_02'  # next:
+    # sim_label = 'test_ppt_57'  # next:
     #
-    # labels = ['P1162', 'P1197', 'cp']
-    # # labels = ['P1162']
+    # # labels = ['P1162', 'P1197', 'cp']
+    # labels = ['P1162']
     #
     # time_fmt = '%Y-%m-%d'
     #
     # beg_time = '1991-01-01'
-    # end_time = '1995-12-31'
+    # end_time = '2000-12-31'
 
 #==============================================================================
 #    Hourly ppt.
@@ -129,19 +129,19 @@ def main():
 #==============================================================================
 #    Daily discharge.
 #==============================================================================
-    # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
-    #
-    # # in_file_path = Path(
-    # #     r'neckar_q_data_combined_20180713_10cps.csv')
-    #
-    # sim_label = 'test_maiden_445'  # next:
-    #
-    # labels = ['420']  # , '3421']  # , 'cp']  #, '427'
-    #
-    # time_fmt = '%Y-%m-%d'
-    #
-    # beg_time = '1963-07-01'
-    # end_time = '1973-08-31'
+    in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
+
+    # in_file_path = Path(
+    #     r'neckar_q_data_combined_20180713_10cps.csv')
+
+    sim_label = 'test_maiden_446'  # next:
+
+    labels = ['420']  # , '3421']  # , 'cp']  #, '427'
+
+    time_fmt = '%Y-%m-%d'
+
+    beg_time = '1963-07-01'
+    end_time = '1973-08-31'
 
 #==============================================================================
 
@@ -200,7 +200,7 @@ def main():
     wts_flag = True
     # wts_flag = False
 
-    n_reals = 100  # A multiple of n_cpus.
+    n_reals = 32  # A multiple of n_cpus.
     outputs_dir = main_dir / sim_label
     n_cpus = 'auto'
 
@@ -232,10 +232,10 @@ def main():
     match_probs_ms_pair_ft_flag = True
 
     scorr_flag = False
-    asymm_type_1_flag = False
-    asymm_type_2_flag = False
+    # asymm_type_1_flag = False
+    # asymm_type_2_flag = False
     ecop_dens_flag = False
-    ecop_etpy_flag = False
+    # ecop_etpy_flag = False
     nth_order_diffs_flag = False
     cos_sin_dist_flag = False
     pcorr_flag = False
@@ -244,8 +244,8 @@ def main():
     ecop_dens_ms_flag = False
     # match_data_ft_flag = False
     # match_probs_ft_flag = False
-    # asymm_type_1_ft_flag = False
-    # asymm_type_2_ft_flag = False
+    asymm_type_1_ft_flag = False
+    asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
     asymm_type_1_ms_ft_flag = False
     asymm_type_2_ms_ft_flag = False
@@ -258,14 +258,14 @@ def main():
     match_data_ms_pair_ft_flag = False
     match_probs_ms_pair_ft_flag = False
 
-    lag_steps = np.arange(1, 31)
+    lag_steps = np.arange(1, 5)
     ecop_bins = 25
     nth_ords = np.arange(1, 3)
-    lag_steps_vld = np.arange(1, 51)
-    nth_ords_vld = np.arange(1, 6)
+    lag_steps_vld = np.arange(1, 21)
+    nth_ords_vld = np.arange(1, 4)
 
     use_dists_in_obj_flag = True
-    # use_dists_in_obj_flag = False
+    use_dists_in_obj_flag = False
 
     use_dens_ftn_flag = True
     use_dens_ftn_flag = False
@@ -274,7 +274,7 @@ def main():
 
     mixing_ratio_reduction_rate_type = 3
     mixing_ratio_reduction_rate_min = 1e-4
-    iaaft_n_iterations_max = 15  # This can be an optimization parameter.
+    iaaft_n_iterations_max = 10  # This can be an optimization parameter.
 
     use_asymmetrize_function_flag = True
     # use_asymmetrize_function_flag = False
@@ -294,17 +294,17 @@ def main():
     # probs_exp_bds = (0.0, 10.0)
 
     n_levels_bds = (0, 200)
-    max_shift_exp_bds = (0.95, 1.05)
-    max_shift_bds = (-10, 10)
+    max_shift_exp_bds = (1.0, 2.0)
+    max_shift_bds = (-10, 30)
     pre_values_ratio_bds = (0.0, 1.0)
     asymmetrize_iterations_bds = (0, 2)
-    prob_center_bds = (0.0, 0.0)
-    pre_val_exp_bds = (1.0, 1.0)
-    crt_val_exp_bds = (1.0, 1.0)
-    level_thresh_cnst_bds = (1, +1000001)
-    level_thresh_slp_bds = (-1.0, +1.0)
+    prob_center_bds = (0.0, 0.5)
+    pre_val_exp_bds = (0.98, 1.02)
+    crt_val_exp_bds = (0.98, 1.02)
+    level_thresh_cnst_bds = (-1000000, +1000000)
+    level_thresh_slp_bds = (-2.0, +2.0)
     rand_err_sclr_cnst_bds = (-5.0, +5.0)
-    rand_err_sclr_rel_bds = (-0.01, +0.01)
+    rand_err_sclr_rel_bds = (-0.1, +0.1)
     probs_exp_bds = (0.99, 1.1)
 
     # weights = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.005], dtype=np.float64)

@@ -174,8 +174,10 @@ class IAAFTSAPlot(
                     title_str += 'probs_exp: %0.3E\n' % sim_grp_main[
                         f'{rltzn_lab}/probs_exps_best'][data_lab_idx]
 
-                    title_str += 'obj_val_min: %0.3E' % sim_grp_main[
+                    title_str += 'obj_val_min: %0.3E | ' % sim_grp_main[
                         f'{rltzn_lab}/obj_vals_min'][-1]
+
+                    title_str += f'Index: {plot_ctr}\n'
 
                 else:
                     title_str += 'mxn_ratio_margs: %0.3E | ' % sim_grp_main[
@@ -184,8 +186,10 @@ class IAAFTSAPlot(
                     title_str += 'mxn_ratio_probs: %0.3E | ' % sim_grp_main[
                         f'{rltzn_lab}/mxn_ratio_probss_best'][data_lab_idx]
 
-                    title_str += 'obj_val_min: %0.3E' % sim_grp_main[
+                    title_str += 'obj_val_min: %0.3E | ' % sim_grp_main[
                         f'{rltzn_lab}/obj_vals_min'][-1]
+
+                    title_str += f'Index: {plot_ctr}\n'
 
                 plt.title(title_str + '\n')
 

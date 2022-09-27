@@ -1457,6 +1457,39 @@ class IAAFTSARealization(GTGAlgRealization):
 
         return
 
+    def _get_adj_mag_spec(self, ft, spec_crctn_cnst, ref_corrs, norm_vals):
+
+        _ = spec_crctn_cnst
+
+        pwr = np.abs(ft) ** 2
+        pwr[0,:] = 0
+
+        corrs = np.fft.irfft(pwr, axis=0)
+        corrs /= corrs[0]
+
+        corrs = np.concatenate((corrs, corrs[[0],:]), axis=0)
+
+        # ref_sim_corrs_diff = spec_crctn_cnst * (ref_corrs - corrs)
+        #
+        # wk_pft = np.fft.rfft(corrs + ref_sim_corrs_diff, axis=0)
+
+        wk_pft = np.fft.rfft((2 * ref_corrs) - corrs, axis=0)
+
+        pwr_adj = np.abs(wk_pft)
+        pwr_adj[0,:] = 0
+
+        if False:
+            pwr_adj[1:,:] *= (norm_vals / pwr_adj[1:,:].sum(axis=0))
+
+            mag_adj = pwr_adj ** 0.5
+
+        else:
+            mag_adj = pwr_adj ** 0.5
+
+            mag_adj[1:,:] *= (norm_vals / mag_adj[1:,:].sum(axis=0))
+
+        return mag_adj
+
     @GTGBase._timer_wrap
     def _run_iaaft(self, opt_vars_cls, plain_iaaft_flag=False):
 
@@ -1464,6 +1497,9 @@ class IAAFTSARealization(GTGAlgRealization):
 
         mag_spec_data = self._rr.data_ft_coeffs_mags.copy()
         mag_spec_probs = self._rr.probs_ft_coeffs_mags.copy()
+
+        spec_norm_vals_data = mag_spec_data[1:,:].sum(axis=0)
+        spec_norm_vals_probs = mag_spec_probs[1:,:].sum(axis=0)
 
         phs_spec_data = self._rr.data_ft_coeffs_phss.copy()
         phs_spec_probs = self._rr.probs_ft_coeffs_phss.copy()
@@ -1485,22 +1521,15 @@ class IAAFTSARealization(GTGAlgRealization):
 
             probs = self._get_probs(data, True)
 
-            # iaaft_n_iters = self._rs.shape[1]
-
-            # opt_vars_cls.mxn_ratio_margss[:] = 1.0
-            # opt_vars_cls.mxn_ratio_probss[:] = 0.0
-
         reorder_idxs_old = np.random.randint(
             0, self._rs.data.shape[0], size=self._rs.data.shape)
 
         order_sdiff = np.nan
         order_sdiffs_break_thresh = 1e-3
 
-        readjust_ft_flag = False
+        readjust_ft_iters = 2
 
-        if ((readjust_ft_flag) and
-            (self._sett_asymm_set_flag) and
-            (not plain_iaaft_flag)):
+        if readjust_ft_iters > 1:
 
             ref_pwr = mag_spec_data ** 2
             ref_pwr[0] = 0
@@ -1508,89 +1537,63 @@ class IAAFTSARealization(GTGAlgRealization):
             ref_pcorrs = np.fft.irfft(ref_pwr, axis=0)
             ref_pcorrs /= ref_pcorrs[0]
 
+            ref_pcorrs = np.concatenate(
+                (ref_pcorrs, ref_pcorrs[[0],:]), axis=0)
+
             ref_pwr = mag_spec_probs ** 2
             ref_pwr[0] = 0
 
             ref_scorrs = np.fft.irfft(ref_pwr, axis=0)
             ref_scorrs /= ref_scorrs[0]
 
+            ref_scorrs = np.concatenate(
+                (ref_scorrs, ref_scorrs[[0],:]), axis=0)
+
             spec_crctn_cnst = 2.0
 
-            readjust_ft_iters = 2
-
-        else:
-            readjust_ft_iters = 1
-
-        # j = readjust_ft_iters
         for j in range(readjust_ft_iters):
-
-        # if plain_iaaft_flag:
 
             stn_ctr = 0
             for i in range(iaaft_n_iters):
 
                 sim_ift = np.zeros_like(data)
 
-                if True:
-                    sim_ft_margs = np.fft.rfft(data, axis=0)
-                    sim_ft_probs = np.fft.rfft(probs, axis=0)
+                sim_ft_margs = np.fft.rfft(data, axis=0)
+                sim_ft_probs = np.fft.rfft(probs, axis=0)
 
-                if ((readjust_ft_flag) and
-                    (j) and
-                    (i == 0) and
-                    (self._sett_asymm_set_flag) and
-                    (not plain_iaaft_flag)):
+                sim_phs_margs = np.angle(sim_ft_margs)
+                sim_phs_probs = np.angle(sim_ft_probs)
 
-                    # Just this produced better copula containment but worse
-                    # FT fits and very bad asymmetries.
+                if j and (i == 0):
+
                     if False:
-                        sim_pwr = np.abs(sim_ft_margs) ** 2
-                        sim_pwr[0] = 0
+                    # if True:
+                        mag_spec_data = self._get_adj_mag_spec(
+                            sim_ft_margs,
+                            spec_crctn_cnst,
+                            ref_pcorrs,
+                            spec_norm_vals_data)
 
-                        sim_pcorrs = np.fft.irfft(sim_pwr, axis=0)
-                        sim_pcorrs /= sim_pcorrs[0]
-
-                        ref_sim_pcorrs_diff = spec_crctn_cnst * (
-                            (ref_pcorrs - sim_pcorrs))
-
-                        wk_pft = np.fft.rfft(
-                            ref_sim_pcorrs_diff + sim_pcorrs, axis=0)
-
-                        mag_spec_data = np.abs(wk_pft) ** 0.5
-
-                        # TODO: phs_spec_data update as well?
                         phs_spec_data = (
-                            self._rr.data_ft_coeffs_phss -
-                            np.angle(sim_ft_margs))
+                            (2 * self._rr.data_ft_coeffs_phss) -
+                            sim_phs_margs)
                     #==========================================================
 
-                    # Just this produced better FT fits but worse copula
-                    # containment.
+                    # if False:
                     if True:
-                        sim_pwr = np.abs(sim_ft_probs) ** 2
-                        sim_pwr[0] = 0
+                        mag_spec_probs = self._get_adj_mag_spec(
+                            sim_ft_probs,
+                            spec_crctn_cnst,
+                            ref_scorrs,
+                            spec_norm_vals_probs)
 
-                        sim_scorrs = np.fft.irfft(sim_pwr, axis=0)
-                        sim_scorrs /= sim_scorrs[0]
-
-                        ref_sim_scorrs_diff = spec_crctn_cnst * (
-                            (ref_scorrs - sim_scorrs))
-
-                        wk_pft = np.fft.rfft(
-                            ref_sim_scorrs_diff + sim_scorrs, axis=0)
-
-                        mag_spec_probs = np.abs(wk_pft) ** 0.5
-
-                        # TODO: phs_spec_data update as well?
                         phs_spec_probs = (
-                            self._rr.probs_ft_coeffs_phss -
-                            np.angle(sim_ft_probs))
+                            (2 * self._rr.probs_ft_coeffs_phss) -
+                            sim_phs_probs)
                     #==========================================================
 
                 # Marginals auto.
                 if self._sett_obj_any_ss_flag:
-                    sim_phs_margs = np.angle(sim_ft_margs)
-
                     if self._sett_prsrv_coeffs_set_flag:
                         sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
                             phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
@@ -1609,20 +1612,19 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 else:
                     sim_ift_margs_auto = 0.0
+                #==============================================================
 
                 # Ranks auto.
                 if self._sett_obj_any_ss_flag:
-                    sim_phs = np.angle(sim_ft_probs)
 
                     if self._sett_prsrv_coeffs_set_flag:
-                        sim_phs[self._rr.prsrv_coeffs_idxs,:] = (
+                        sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
                             phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
 
                     sim_ft_new = np.empty_like(sim_ft_probs)
 
-                    sim_ft_new.real[:] = np.cos(sim_phs) * mag_spec_probs
-
-                    sim_ft_new.imag[:] = np.sin(sim_phs) * mag_spec_probs
+                    sim_ft_new.real[:] = np.cos(sim_phs_probs) * mag_spec_probs
+                    sim_ft_new.imag[:] = np.sin(sim_phs_probs) * mag_spec_probs
 
                     sim_ft_new[0,:] = 0
 
@@ -1633,14 +1635,14 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 else:
                     sim_ift_probs_auto = 0.0
-                #==================================================================
+                #==============================================================
 
                 # Marginals cross.
                 if self._sett_obj_any_ms_flag:
-                    sim_mag = self._rr.data_ft_coeffs_mags.copy()
+                    # sim_mag = self._rr.data_ft_coeffs_mags.copy()
 
                     sim_phs = (
-                        np.angle(sim_ft_margs[:, [stn_ctr]]) +
+                        sim_phs_margs[:, [stn_ctr]] +
                         phs_spec_data - phs_spec_data[:, [stn_ctr]])
 
                     sim_phs[0,:] = phs_spec_data[0,:]
@@ -1651,8 +1653,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
                     sim_ft_new = np.empty_like(sim_ft_margs)
 
-                    sim_ft_new.real[:] = np.cos(sim_phs) * sim_mag
-                    sim_ft_new.imag[:] = np.sin(sim_phs) * sim_mag
+                    sim_ft_new.real[:] = np.cos(sim_phs) * mag_spec_data
+                    sim_ft_new.imag[:] = np.sin(sim_phs) * mag_spec_data
 
                     sim_ft_new[0,:] = 0
 
@@ -1663,13 +1665,14 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 else:
                     sim_ift_margs_cross = 0.0
+                #==============================================================
 
                 # Ranks cross.
                 if self._sett_obj_any_ms_flag:
-                    sim_mag = self._rr.probs_ft_coeffs_mags.copy()
+                    # sim_mag = self._rr.probs_ft_coeffs_mags.copy()
 
                     sim_phs = (
-                        np.angle(sim_ft_probs[:, [stn_ctr]]) +
+                        sim_phs_probs[:, [stn_ctr]] +
                         phs_spec_probs - phs_spec_probs[:, [stn_ctr]])
 
                     sim_phs[0,:] = phs_spec_probs[0,:]
@@ -1680,8 +1683,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
                     sim_ft_new = np.empty_like(sim_ft_probs)
 
-                    sim_ft_new.real[:] = np.cos(sim_phs) * sim_mag
-                    sim_ft_new.imag[:] = np.sin(sim_phs) * sim_mag
+                    sim_ft_new.real[:] = np.cos(sim_phs) * mag_spec_probs
+                    sim_ft_new.imag[:] = np.sin(sim_phs) * mag_spec_probs
 
                     sim_ft_new[0,:] = 0
 
@@ -1692,7 +1695,7 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 else:
                     sim_ift_probs_cross = 0.0
-                #==================================================================
+                #==============================================================
 
                 assert isinstance(sim_ift, np.ndarray), type(sim_ift)
                 assert np.all(np.isfinite(sim_ift))
@@ -1745,9 +1748,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 for k in range(self._data_ref_n_labels):
                     data[:, k] = self._data_ref_rltzn_srtd[
                         np.argsort(np.argsort(probs[:, k])), k]
-
-            else:
-                break
+            #==================================================================
 
         self._rs.ft = np.fft.rfft(data, axis=0)
 
