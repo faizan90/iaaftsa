@@ -89,37 +89,6 @@ class IAAFTSAPrepareTfms(GTGPrepareTfms):
         GTGPrepareTfms.__init__(self)
         return
 
-    # def _get_sim_ft_pln(self):
-    #
-    #     '''
-    #     Plain phase randomization.
-    #
-    #     Not the same as phsann.
-    #     '''
-    #
-    #     ft = np.zeros(self._rs.shape, dtype=np.complex)
-    #
-    #     mag_spec = self._rr.mag_spec.copy()
-    #
-    #     rands = np.random.random((self._rs.shape[0], 1))
-    #
-    #     rands = 1.0 * (-np.pi + (2 * np.pi * rands))
-    #
-    #     rands[self._rr.prsrv_coeffs_idxs] = 0.0
-    #
-    #     phs_spec = self._rr.phs_spec[:,:].copy()
-    #
-    #     phs_spec += rands  # out of bound phs
-    #
-    #     ft.real[:,:] = mag_spec[:,:] * np.cos(phs_spec)
-    #     ft.imag[:,:] = mag_spec[:,:] * np.sin(phs_spec)
-    #
-    #     # First and last coefficients are not written to anywhere, normally.
-    #     ft[+0,:] = self._rr.ft[+0].copy()
-    #     ft[-1,:] = self._rr.ft[-1].copy()
-    #
-    #     return ft
-
     def _get_shuffle_ser_ft(self):
 
         data = np.empty_like(self._rr.data)
@@ -169,11 +138,6 @@ class IAAFTSAPrepare(GTGPrepare):
                 self._rr.prsrv_coeffs_idxs[
                     periods > self._sett_prsrv_coeffs_max_prd] = True
 
-        # else:
-        #     self._rr.prsrv_coeffs_idxs[
-        #         (periods >= self._sett_prsrv_coeffs_min_prd) &
-        #         (periods <= self._sett_prsrv_coeffs_max_prd)] = True
-
         if self._sett_prsrv_coeffs_set_flag:
             assert self._rr.prsrv_coeffs_idxs.sum(), (
                 'Incorrect min_period or max_period, '
@@ -191,9 +155,6 @@ class IAAFTSAPrepare(GTGPrepare):
 
         self._set_prsrv_coeffs_idxs()
 
-        # self._rr.coeffs_idxs = np.arange(
-        #     1, self._rr.ft.shape[0] - 1)[self._rr.not_prsrv_coeffs_idxs]
-
         self._prep_ref_aux_flag = True
         return
 
@@ -207,7 +168,6 @@ class IAAFTSAPrepare(GTGPrepare):
         self._rs.shape = (1 + (self._data_ref_shape[0] // 2),
             self._data_ref_n_labels)
 
-        # ft = self._get_sim_ft_pln()
         ft = self._get_shuffle_ser_ft()
 
         assert np.all(np.isfinite(ft)), 'Invalid values in ft!'

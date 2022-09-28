@@ -1436,6 +1436,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
     def _init_iaaft(self, opt_vars_cls):
 
+        _ = opt_vars_cls
+
         # Start with a scrambled series.
         self._gen_sim_aux_data()
 
@@ -1444,22 +1446,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
         self._rs.ft = np.fft.rfft(self._rs.data_init, axis=0)
 
-        if False:
-            self._run_iaaft(opt_vars_cls, True)
-
-            # self._rs.data_init = self._rs.data.copy(order='f')
-            # self._rs.probs_init = self._rs.probs.copy(order='f')
-
         self._update_sim_no_prms()
-
-        # self._rs.data_init = self._rs.data.copy(order='f')
-        # self._rs.probs_init = self._rs.probs.copy(order='f')
-
         return
 
     def _get_adj_mag_spec(self, ft, spec_crctn_cnst, ref_corrs, norm_vals):
-
-        _ = spec_crctn_cnst
 
         pwr = np.abs(ft) ** 2
         pwr[0,:] = 0
@@ -1469,11 +1459,13 @@ class IAAFTSARealization(GTGAlgRealization):
 
         corrs = np.concatenate((corrs, corrs[[0],:]), axis=0)
 
-        # ref_sim_corrs_diff = spec_crctn_cnst * (ref_corrs - corrs)
-        #
-        # wk_pft = np.fft.rfft(corrs + ref_sim_corrs_diff, axis=0)
+        if False:
+            ref_sim_corrs_diff = spec_crctn_cnst * (ref_corrs - corrs)
 
-        wk_pft = np.fft.rfft((2 * ref_corrs) - corrs, axis=0)
+            wk_pft = np.fft.rfft(corrs + ref_sim_corrs_diff, axis=0)
+
+        else:
+            wk_pft = np.fft.rfft((2 * ref_corrs) - corrs, axis=0)
 
         pwr_adj = np.abs(wk_pft)
         pwr_adj[0,:] = 0
@@ -1566,8 +1558,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 if j and (i == 0):
 
-                    if False:
-                    # if True:
+                    # if False:
+                    if True:
                         mag_spec_data = self._get_adj_mag_spec(
                             sim_ft_margs,
                             spec_crctn_cnst,
@@ -1639,7 +1631,6 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 # Marginals cross.
                 if self._sett_obj_any_ms_flag:
-                    # sim_mag = self._rr.data_ft_coeffs_mags.copy()
 
                     sim_phs = (
                         sim_phs_margs[:, [stn_ctr]] +
@@ -1669,7 +1660,6 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 # Ranks cross.
                 if self._sett_obj_any_ms_flag:
-                    # sim_mag = self._rr.probs_ft_coeffs_mags.copy()
 
                     sim_phs = (
                         sim_phs_probs[:, [stn_ctr]] +
@@ -1782,10 +1772,7 @@ class IAAFTSARealization(GTGAlgRealization):
         if self._data_ref_rltzn.ndim != 2:
             raise NotImplementedError('Implemention for 2D only!')
 
-        # # IAAFTSA variable.
-        # self._rs.data_init = self._rs.data.copy(order='f')
-        # self._rs.probs_init = self._rs.probs.copy(order='f')
-
+        # IAAFTSA variable.
         self._update_iter_prms_flags()
 
         # IAAFTSA variable.
@@ -1921,8 +1908,6 @@ class IAAFTSARealization(GTGAlgRealization):
 
             new_obj_val_indiv = self._get_obj_ftn_val()
 
-            # all_imprvd_cdtn = (new_obj_val_indiv < old_obj_val_indiv).all()
-
             new_obj_val = new_obj_val_indiv.sum()
 
             old_new_diff = old_obj_val - new_obj_val
@@ -1933,14 +1918,6 @@ class IAAFTSARealization(GTGAlgRealization):
             if old_new_adj_diff > 0:
 
                 accept_flag = True
-
-            # if ((old_new_adj_diff > 0) and all_imprvd_cdtn):
-            #
-            #     accept_flag = True
-            #
-            # elif ((old_new_adj_diff > 0) and (not all_imprvd_cdtn)):
-            #
-            #     accept_flag = False
 
             else:
                 rand_p = np.random.random()
@@ -1955,8 +1932,6 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 else:
                     accept_flag = False
-
-            # print(accept_flag, old_obj_val, new_obj_val, temp)
 
             if self._alg_force_acpt_flag:
 

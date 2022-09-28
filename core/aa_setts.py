@@ -61,6 +61,7 @@ class IAAFTSASettings(GTGSettings):
         self._sett_prsrv_coeffs_max_prd = None
         self._sett_prsrv_coeffs_beyond_flag = None
 
+        # Flags.
         self._sett_ann_iaaftsa_sa_set_flag = False
         self._sett_asymm_set_flag = False
         self._sett_prsrv_coeffs_set_flag = False
@@ -200,8 +201,8 @@ class IAAFTSASettings(GTGSettings):
         f'''
         Specify the parameter bounds for the asymmetrize function that is
         called on an IAAFTed series. Passing an IAAFTed series through
-        this function gives it properties that are different than the
-        Gaussian properties.
+        this function gives it properties that are different than that of
+        a Gaussian series.
 
         Parameters
         ----------
@@ -211,35 +212,30 @@ class IAAFTSASettings(GTGSettings):
         n_levels_bds : list or tuple of two integers
             Bounds for the number of levels to use in the asymmetrize function.
             First value is the lower while the second is the upper bound.
-            Both should be greater than 1. Can also be equal.
-            A check is performed later to see if the given length of the
-            time series can have enough of these levels. If the series is
-            too short then the bounds are adjusted to N - 1 levels.
+            Both should be >= 0. Can also be equal.
         max_shift_exp_bds : list or tuple of two floats
-            To control the nonlinearity of the number of steps that
+            To control the non-linearity of the number of steps that
             can be shifted for a given level. The higher the level, the
             higher the max_shift_exp, the lower the number of steps by which
-            the values in that level can be shifted. The shift is constant
-            for steps in all levels when it is 1. Both bounds should be
-            greater than zero and less than infinity.
+            the values in that level can be shifted. Both bounds should be
+            >= zero and < infinity.
         max_shift_bds : list or tuple of two integers
             The maximum number of time steps by which the asymmetrizing
             function can shift values in a given level. Can be positive or
-            negative. Values of zero are not allowed. Absolute value should
-            be greater than 1.
+            negative. Negative values will reverse the direction of series.
         pre_values_ratio_bds : list or tuple of two floats
             The ratio of the each value in a level that is mixed
             with a corresponding one. This allows for a smooth transition
-            between two values. Both have to be in between zero and one.
+            between two values.
         asymmetrize_iterations_bds : list or tuple of two integers
             The number of times a series is passed through the asymmetrizing
             function. The more this number the smoother the series gets.
-            Both should be more than zero.
+            Both should be >= zero.
         prob_center_bds : list or tuple of two floats
             At which F(x) value to take the lowest level. Should be between
             0 and 1, including.
         pre_val_exp_bds : list or tuple of two floats
-            The exponent to which a current value is raise before it is
+            The exponent to which a current value is raised before it is
             multiplied by pre_values_ratio. The mismatch between pre_val_exp
             and crt_val_exp allows for an asymmetric simulation around a
             value. Should be a valid real number equal to or greater than
@@ -247,20 +243,58 @@ class IAAFTSASettings(GTGSettings):
             absolute in case resulting value is a complex number. The sign
             is maintained.
         crt_val_exp_bds : list or tuple of two floats
-            Same as pre_val_exp_bds but is current value is raised to this
+            Same as pre_val_exp_bds but the shifted value is raised to this
             exponent and then muliplied by 1 - pre_values_ratio.
+        level_thresh_cnst_bds : list or tuple of two integers
+            Selective steps can be only modified given they are within a
+            certain limit of levels to the current one. This way values
+            that are too far away are not taken into account. This allows for
+            asymmetric results. level_thresh_cnst_bds contain the bounds
+            on the constant maximum difference that the level at the current
+            step and the level that is currently considered can have.
+            The equation for this threshold is:
+            level_thresh = level_thresh_cnst + (level_thresh_slp * level).
+            Can be positive or negative values.
+        level_thresh_slp_bds : list or tuple of two floats
+            Allows for tapering of the threshold as the level increases.
+            This allows for different thresholds based on the current
+            level considered. The equation is given in the previous parameter.
+        rand_err_sclr_cnst_bds : list or tuple of two floats
+            The series returned by the asymmetrizing function are without
+            errors i.e. no measurement error. This creates series that have
+            lower noise than the reference series. For this purpose two
+            errors are added to the final outputs. One is a constant
+            random term and the other is a term relative to the magnitude.
+            A constant is taken (the non-zero absolute minimum for each
+            variable), and it is scaled randomly by multiplying random
+            numbers between zero and one and then by randomly taking a number
+            between the two values in rand_err_sclr_cnst_bds. All this is
+            done to the final asymmetrized series.
+        rand_err_sclr_rel_bds : list or tuple of two floats
+            Coming from the previous parameter, this term allows for errors
+            that are relative to the asymmetrized data at the end. This can
+            be seen as a plus minus error in percentage applied to the
+            asymmetrized data.
+        probs_exp_bds :  list or tuple of two floats
+            The level of a given value in the input data is computed based
+            on its non-exceedance probability. This probability can be raised
+            to a positive power to produce levels that are not uniformly
+            distributed between zero and one. Should be >= zero and < Infinity.
         '''
 
         if self._vb:
             print_sl()
 
             print('Setting asymmetrize function settings...')
+        #======================================================================
 
+        # Type.
         assert isinstance(asymmetrize_type, int), (
             'asymmetrize_type not an integer!')
 
         assert asymmetrize_type in self._sett_asymm_types, (
             'Invalid asymmetrize_type!')
+        #======================================================================
 
         # n_levels_bds.
         assert isinstance(n_levels_bds, (list, tuple)), (
@@ -276,6 +310,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert n_levels_bds[1] >= n_levels_bds[0], (
             'Values in n_levels_bds must be ascending!')
+        #======================================================================
 
         # max_shift_exp_bds.
         assert isinstance(max_shift_exp_bds, (list, tuple)), (
@@ -288,14 +323,19 @@ class IAAFTSASettings(GTGSettings):
                     for max_shift_exp in max_shift_exp_bds]), (
             'All values in max_shift_exp_bds must be floats!')
 
+        assert all([np.isfinite(max_shift_exp_bd)
+                    for max_shift_exp_bd in max_shift_exp_bds]), (
+            'All values in max_shift_exp_bds must be finite!')
+
         assert max_shift_exp_bds[0] >= 0, (
             'Invalid value of max_shift_exp lower bounds!')
 
         assert max_shift_exp_bds[1] >= max_shift_exp_bds[0], (
-            'Values in n_levels_bds must be ascending!')
+            'Values in max_shift_exp_bds must be ascending!')
 
         assert max_shift_exp_bds[1] < np.inf, (
             'Invalid value of max_shift_exp upper bounds!')
+        #======================================================================
 
         # max_shift_bds.
         assert isinstance(max_shift_bds, (list, tuple)), (
@@ -308,14 +348,9 @@ class IAAFTSASettings(GTGSettings):
                     for max_shift in max_shift_bds]), (
             'All values in max_shift_bds must be integers!')
 
-        # assert max_shift_bds[0] > 1, (
-        #     'Invalid value of max_shift lower bounds!')
-        #
-        # assert max_shift_bds[1] > 1, (
-        #     'Invalid value of max_shift upper bounds!')
-
         assert max_shift_bds[1] >= max_shift_bds[0], (
             'Values in max_shift_bds must be ascending!')
+        #======================================================================
 
         # pre_values_ratio_bds.
         assert isinstance(pre_values_ratio_bds, (list, tuple)), (
@@ -328,14 +363,13 @@ class IAAFTSASettings(GTGSettings):
                     for pre_values_ratio in pre_values_ratio_bds]), (
             'All values in pre_values_ratio_bds must be floats!')
 
-        # assert pre_values_ratio_bds[0] >= 0, (
-        #     'Invalid value of pre_values_ratio lower bounds!')
+        assert all([np.isfinite(pre_values_ratio_bd)
+                    for pre_values_ratio_bd in pre_values_ratio_bds]), (
+            'All values in pre_values_ratio_bds must be finite!')
 
         assert pre_values_ratio_bds[1] >= pre_values_ratio_bds[0], (
-            'Values in n_levels_bds must be ascending!')
-
-        # assert pre_values_ratio_bds[1] <= 1, (
-        #     'Invalid value of pre_values_ratio upper bounds!')
+            'Values in pre_values_ratio_bds must be ascending!')
+        #======================================================================
 
         # asymmetrize_iterations_bds.
         assert isinstance(asymmetrize_iterations_bds, (list, tuple)), (
@@ -355,6 +389,7 @@ class IAAFTSASettings(GTGSettings):
         assert (asymmetrize_iterations_bds[1] >=
                 asymmetrize_iterations_bds[0]), (
             'Values in asymmetrize_iterations_bds must be ascending!')
+        #======================================================================
 
         # prob_center_bds.
         assert isinstance(prob_center_bds, (list, tuple)), (
@@ -367,14 +402,19 @@ class IAAFTSASettings(GTGSettings):
                     for prob_center in prob_center_bds]), (
             'All values in prob_center_bds must be floats!')
 
+        assert all([np.isfinite(prob_center_bd)
+                    for prob_center_bd in prob_center_bds]), (
+            'All values in prob_center_bds must be finite!')
+
         assert prob_center_bds[0] >= 0, (
             'Invalid value of prob_center lower bounds!')
 
         assert prob_center_bds[1] >= prob_center_bds[0], (
-            'Values in n_levels_bds must be ascending!')
+            'Values in prob_center_bds must be ascending!')
 
         assert prob_center_bds[1] <= 1.0, (
             'Invalid value of prob_center upper bounds!')
+        #======================================================================
 
         # pre_val_exp_bds.
         assert isinstance(pre_val_exp_bds, (list, tuple)), (
@@ -396,6 +436,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert pre_val_exp_bds[0] <= pre_val_exp_bds[1], (
             'Values in pre_val_exp_bds must be ascending!')
+        #======================================================================
 
         # crt_val_exp_bds.
         assert isinstance(crt_val_exp_bds, (list, tuple)), (
@@ -417,6 +458,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert crt_val_exp_bds[0] <= crt_val_exp_bds[1], (
             'Values in crt_val_exp_bds must be ascending!')
+        #======================================================================
 
         # level_thresh_cnst_bds.
         assert isinstance(level_thresh_cnst_bds, (list, tuple)), (
@@ -431,6 +473,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert level_thresh_cnst_bds[1] >= level_thresh_cnst_bds[0], (
             'Values in level_thresh_cnst_bds must be ascending!')
+        #======================================================================
 
         # level_thresh_slp_bds.
         assert isinstance(level_thresh_slp_bds, (list, tuple)), (
@@ -449,6 +492,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert level_thresh_slp_bds[0] <= level_thresh_slp_bds[1], (
             'Values in level_thresh_slp_bds must be ascending!')
+        #======================================================================
 
         # rand_err_sclr_cnst_bds.
         assert isinstance(rand_err_sclr_cnst_bds, (list, tuple)), (
@@ -467,6 +511,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert rand_err_sclr_cnst_bds[0] <= rand_err_sclr_cnst_bds[1], (
             'Values in rand_err_sclr_cnst_bds must be ascending!')
+        #======================================================================
 
         # rand_err_sclr_rel_bds.
         assert isinstance(rand_err_sclr_rel_bds, (list, tuple)), (
@@ -485,6 +530,7 @@ class IAAFTSASettings(GTGSettings):
 
         assert rand_err_sclr_rel_bds[0] <= rand_err_sclr_rel_bds[1], (
             'Values in rand_err_sclr_rel_bds must be ascending!')
+        #======================================================================
 
         # probs_exp_bds.
         assert isinstance(probs_exp_bds, (list, tuple)), (
@@ -503,6 +549,13 @@ class IAAFTSASettings(GTGSettings):
 
         assert probs_exp_bds[0] <= probs_exp_bds[1], (
             'Values in probs_exp_bds must be ascending!')
+
+        assert probs_exp_bds[0] >= 0, (
+            'Invalid value of probs_exp lower bounds!')
+
+        assert probs_exp_bds[1] >= probs_exp_bds[0], (
+            'Values in probs_exp_bds must be ascending!')
+        #======================================================================
 
         # Set all values.
         self._sett_asymm_type = asymmetrize_type
@@ -545,6 +598,7 @@ class IAAFTSASettings(GTGSettings):
 
         self._sett_asymm_probs_exp_lbd = probs_exp_bds[0]
         self._sett_asymm_probs_exp_ubd = probs_exp_bds[1]
+        #======================================================================
 
         if self._vb:
             print('Asymmetrize type:', self._sett_asymm_type)
