@@ -8,6 +8,7 @@ from collections import deque
 from timeit import default_timer
 
 import numpy as np
+from scipy.stats import rankdata
 
 from fcopulas import asymmetrize_type_11_ms_cy
 
@@ -1487,6 +1488,9 @@ class IAAFTSARealization(GTGAlgRealization):
 
         assert any([self._sett_obj_any_ss_flag, self._sett_obj_any_ms_flag])
 
+        if self._sett_obj_any_ms_flag:
+            assert self._rs.data.shape[1] > 1, self._rs.data.shape[1]
+
         mag_spec_data = self._rr.data_ft_coeffs_mags.copy()
         mag_spec_probs = self._rr.probs_ft_coeffs_mags.copy()
 
@@ -1520,6 +1524,7 @@ class IAAFTSARealization(GTGAlgRealization):
         order_sdiffs_break_thresh = 1e-3
 
         readjust_ft_iters = 2
+        phs_spec_swap_iter = 2
 
         if readjust_ft_iters > 1:
 
@@ -1542,6 +1547,8 @@ class IAAFTSARealization(GTGAlgRealization):
                 (ref_scorrs, ref_scorrs[[0],:]), axis=0)
 
             spec_crctn_cnst = 2.0
+
+        assert readjust_ft_iters >= 1, readjust_ft_iters
 
         for j in range(readjust_ft_iters):
 
@@ -1586,18 +1593,41 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 # Marginals auto.
                 if self._sett_obj_any_ss_flag:
-                    if self._sett_prsrv_coeffs_set_flag:
-                        sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
-                            phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
 
                     sim_ft_new = np.empty_like(sim_ft_margs)
 
-                    sim_ft_new.real[:] = np.cos(sim_phs_margs) * mag_spec_data
-                    sim_ft_new.imag[:] = np.sin(sim_phs_margs) * mag_spec_data
+                    if i <= phs_spec_swap_iter:
+                        if self._sett_prsrv_coeffs_set_flag:
+                            sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
+                                phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
+
+                        sim_ft_new.real[:] = (
+                            np.cos(sim_phs_margs) * mag_spec_data)
+
+                        sim_ft_new.imag[:] = (
+                            np.sin(sim_phs_margs) * mag_spec_data)
+
+                    else:
+                        if self._sett_prsrv_coeffs_set_flag:
+                            sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
+                                phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
+
+                        sim_ft_new.real[:] = (
+                            np.cos(sim_phs_probs) * mag_spec_data)
+
+                        sim_ft_new.imag[:] = (
+                            np.sin(sim_phs_probs) * mag_spec_data)
 
                     sim_ft_new[0,:] = 0
 
                     sim_ift_margs_auto = np.fft.irfft(sim_ft_new, axis=0)
+
+                    for k in range(self._data_ref_shape[1]):
+                        sim_ift_margs_auto[:, k] = self._data_ref_rltzn_srtd[
+                            np.argsort(np.argsort(sim_ift_margs_auto[:, k])), k]
+
+                    sim_ift_margs_auto -= sim_ift_margs_auto.mean(axis=0)
+                    sim_ift_margs_auto /= sim_ift_margs_auto.std(axis=0)
 
                     sim_ift += (
                         sim_ift_margs_auto * opt_vars_cls.mxn_ratio_margss)
@@ -1609,18 +1639,37 @@ class IAAFTSARealization(GTGAlgRealization):
                 # Ranks auto.
                 if self._sett_obj_any_ss_flag:
 
-                    if self._sett_prsrv_coeffs_set_flag:
-                        sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
-                            phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
-
                     sim_ft_new = np.empty_like(sim_ft_probs)
 
-                    sim_ft_new.real[:] = np.cos(sim_phs_probs) * mag_spec_probs
-                    sim_ft_new.imag[:] = np.sin(sim_phs_probs) * mag_spec_probs
+                    if i <= phs_spec_swap_iter:
+                        if self._sett_prsrv_coeffs_set_flag:
+                            sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
+                                phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
+
+                        sim_ft_new.real[:] = (
+                            np.cos(sim_phs_probs) * mag_spec_probs)
+
+                        sim_ft_new.imag[:] = (
+                            np.sin(sim_phs_probs) * mag_spec_probs)
+
+                    else:
+                        if self._sett_prsrv_coeffs_set_flag:
+                            sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
+                                phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
+
+                        sim_ft_new.real[:] = (
+                            np.cos(sim_phs_margs) * mag_spec_probs)
+
+                        sim_ft_new.imag[:] = (
+                            np.sin(sim_phs_margs) * mag_spec_probs)
 
                     sim_ft_new[0,:] = 0
 
                     sim_ift_probs_auto = np.fft.irfft(sim_ft_new, axis=0)
+
+                    sim_ift_probs_auto = rankdata(sim_ift_probs_auto, axis=0)
+                    sim_ift_probs_auto -= sim_ift_probs_auto.mean(axis=0)
+                    sim_ift_probs_auto /= sim_ift_probs_auto.std(axis=0)
 
                     sim_ift += (
                         sim_ift_probs_auto * opt_vars_cls.mxn_ratio_probss)
@@ -1710,7 +1759,9 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 probs = self._get_probs(data, True)
 
-                if order_sdiff <= order_sdiffs_break_thresh:
+                if ((i > phs_spec_swap_iter) and
+                    (order_sdiff <= order_sdiffs_break_thresh)):
+
                     # Nothing changed.
                     break
 
