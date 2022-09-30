@@ -72,17 +72,17 @@ def main():
 #==============================================================================
 #    Daily ppt.
 #==============================================================================
-    in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
-
-    sim_label = 'test_ppt_58'  # next:
-
-    # labels = ['P1162', 'P1197', 'cp']
-    labels = ['P1162']
-
-    time_fmt = '%Y-%m-%d'
-
-    beg_time = '1991-01-01'
-    end_time = '2000-12-31'
+    # in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
+    #
+    # sim_label = 'test_ppt_60'  # next:
+    #
+    # labels = ['P1162', 'P1197']  # , 'cp']
+    # # labels = ['P1162']
+    #
+    # time_fmt = '%Y-%m-%d'
+    #
+    # beg_time = '1991-01-01'
+    # end_time = '1996-12-31'
 
 #==============================================================================
 #    Hourly ppt.
@@ -129,19 +129,19 @@ def main():
 #==============================================================================
 #    Daily discharge.
 #==============================================================================
-    # # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
-    #
-    # in_file_path = Path(
-    #     r'neckar_q_data_combined_20180713_10cps.csv')
-    #
-    # sim_label = 'test_maiden_463'  # next:
-    #
-    # labels = ['420']  # , '3421']  # , 'cp']  #, '427'
-    #
-    # time_fmt = '%Y-%m-%d'
-    #
-    # beg_time = '1963-07-01'
-    # end_time = '1967-08-31'
+    # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
+
+    in_file_path = Path(
+        r'neckar_q_data_combined_20180713_10cps.csv')
+
+    sim_label = 'test_maiden_465'  # next:
+
+    labels = ['420', '3421']  # , 'cp']  #, '427'
+
+    time_fmt = '%Y-%m-%d'
+
+    beg_time = '1963-07-01'
+    end_time = '1974-08-31'
 
 #==============================================================================
 
@@ -232,8 +232,8 @@ def main():
     match_probs_ms_pair_ft_flag = True
 
     scorr_flag = False
-    # asymm_type_1_flag = False
-    # asymm_type_2_flag = False
+    asymm_type_1_flag = False
+    asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -242,8 +242,8 @@ def main():
     asymm_type_1_ms_flag = False
     asymm_type_2_ms_flag = False
     ecop_dens_ms_flag = False
-    # match_data_ft_flag = False
-    # match_probs_ft_flag = False
+    match_data_ft_flag = False
+    match_probs_ft_flag = False
     asymm_type_1_ft_flag = False
     asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
@@ -253,8 +253,8 @@ def main():
     etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
-    match_data_ms_ft_flag = False
-    match_probs_ms_ft_flag = False
+    # match_data_ms_ft_flag = False
+    # match_probs_ms_ft_flag = False
     match_data_ms_pair_ft_flag = False
     match_probs_ms_pair_ft_flag = False
 
@@ -274,10 +274,10 @@ def main():
 
     mixing_ratio_reduction_rate_type = 3
     mixing_ratio_reduction_rate_min = 1e-4
-    iaaft_n_iterations_max = 10  # This can be an optimization parameter.
+    iaaft_n_iterations_max = 5  # This can be an optimization parameter.
 
     use_asymmetrize_function_flag = True
-    # use_asymmetrize_function_flag = False
+    use_asymmetrize_function_flag = False
     asymmetrize_type = 2
     # n_levels_bds = (0, 200)
     # max_shift_exp_bds = (0.5, 5.0)

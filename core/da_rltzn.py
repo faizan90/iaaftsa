@@ -1524,7 +1524,9 @@ class IAAFTSARealization(GTGAlgRealization):
         order_sdiffs_break_thresh = 1e-3
 
         readjust_ft_iters = 2
-        phs_spec_swap_iter = 2
+        phs_spec_swap_iter = 2 * self._data_ref_shape[1]
+
+        # phs_spec_swap_iter = iaaft_n_iters * 100
 
         if readjust_ft_iters > 1:
 
@@ -1681,11 +1683,19 @@ class IAAFTSARealization(GTGAlgRealization):
                 # Marginals cross.
                 if self._sett_obj_any_ms_flag:
 
-                    sim_phs = (
-                        sim_phs_margs[:, [stn_ctr]] +
-                        phs_spec_data - phs_spec_data[:, [stn_ctr]])
+                    if i <= phs_spec_swap_iter:
+                        sim_phs = (
+                            sim_phs_margs[:, [stn_ctr]] +
+                            phs_spec_data - phs_spec_data[:, [stn_ctr]])
 
-                    sim_phs[0,:] = phs_spec_data[0,:]
+                        sim_phs[0,:] = phs_spec_data[0,:]
+
+                    else:
+                        sim_phs = (
+                            sim_phs_probs[:, [stn_ctr]] +
+                            phs_spec_probs - phs_spec_probs[:, [stn_ctr]])
+
+                        sim_phs[0,:] = phs_spec_probs[0,:]
 
                     if self._sett_prsrv_coeffs_set_flag:
                         sim_phs[self._rr.prsrv_coeffs_idxs,:] = (
@@ -1700,6 +1710,13 @@ class IAAFTSARealization(GTGAlgRealization):
 
                     sim_ift_margs_cross = np.fft.irfft(sim_ft_new, axis=0)
 
+                    for k in range(self._data_ref_shape[1]):
+                        sim_ift_margs_cross[:, k] = self._data_ref_rltzn_srtd[
+                            np.argsort(np.argsort(sim_ift_margs_cross[:, k])), k]
+
+                    sim_ift_margs_cross -= sim_ift_margs_cross.mean(axis=0)
+                    sim_ift_margs_cross /= sim_ift_margs_cross.std(axis=0)
+
                     sim_ift += (
                         sim_ift_margs_cross * opt_vars_cls.mxn_ratio_margss)
 
@@ -1710,11 +1727,19 @@ class IAAFTSARealization(GTGAlgRealization):
                 # Ranks cross.
                 if self._sett_obj_any_ms_flag:
 
-                    sim_phs = (
-                        sim_phs_probs[:, [stn_ctr]] +
-                        phs_spec_probs - phs_spec_probs[:, [stn_ctr]])
+                    if i <= phs_spec_swap_iter:
+                        sim_phs = (
+                            sim_phs_probs[:, [stn_ctr]] +
+                            phs_spec_probs - phs_spec_probs[:, [stn_ctr]])
 
-                    sim_phs[0,:] = phs_spec_probs[0,:]
+                        sim_phs[0,:] = phs_spec_probs[0,:]
+
+                    else:
+                        sim_phs = (
+                            sim_phs_margs[:, [stn_ctr]] +
+                            phs_spec_data - phs_spec_data[:, [stn_ctr]])
+
+                        sim_phs[0,:] = phs_spec_data[0,:]
 
                     if self._sett_prsrv_coeffs_set_flag:
                         sim_phs[self._rr.prsrv_coeffs_idxs,:] = (
@@ -1728,6 +1753,10 @@ class IAAFTSARealization(GTGAlgRealization):
                     sim_ft_new[0,:] = 0
 
                     sim_ift_probs_cross = np.fft.irfft(sim_ft_new, axis=0)
+
+                    sim_ift_probs_cross = rankdata(sim_ift_probs_cross, axis=0)
+                    sim_ift_probs_cross -= sim_ift_probs_cross.mean(axis=0)
+                    sim_ift_probs_cross /= sim_ift_probs_cross.std(axis=0)
 
                     sim_ift += (
                         sim_ift_probs_cross * opt_vars_cls.mxn_ratio_probss)
