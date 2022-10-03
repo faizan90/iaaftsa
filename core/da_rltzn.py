@@ -461,25 +461,41 @@ class IAAFTSARealization(GTGAlgRealization):
 
         opt_vars_cls_new = opt_vars_cls_old.get_copy()
 
-        n_vars_to_choose_from = self._rltzn_iter_prms_flags.size
-
-        updt_vars_idxs = np.arange(n_vars_to_choose_from)[
+        updt_vars_idxs = np.arange(self._rltzn_iter_prms_flags.size)[
             self._rltzn_iter_prms_flags]
-
-        max_search_atpts = 1000
-        search_atpts = 0
 
         col_idx = np.random.choice(np.arange(self._data_ref_shape[1]))
 
-        var_updt_flag = False
+        n_vars_to_updt = 1 + int(mxn_ratio_red_rate * updt_vars_idxs.size)
 
-        while not var_updt_flag:
+        if mxn_ratio_red_rate == 1.0:
+            n_vars_to_updt -= 1
+
+        assert n_vars_to_updt <= updt_vars_idxs.size, (
+            n_vars_to_updt, updt_vars_idxs.size)
+
+        assert n_vars_to_updt >= 1
+
+        if not self._sett_asymm_set_flag:
+            assert n_vars_to_updt == 1, n_vars_to_updt
+
+        search_atpts = 0
+        max_search_atpts = 1000 * n_vars_to_updt
+
+        updt_var_idxs = []
+
+        while len(updt_var_idxs) != n_vars_to_updt:
+
+            search_atpts += 1
 
             if search_atpts == max_search_atpts:
                 self._rltzn_prm_max_srch_atpts_flag = True
                 break
 
             var_to_updt = np.random.choice(updt_vars_idxs)
+
+            if var_to_updt in updt_var_idxs:
+                continue
 
             # Mixing variables.
             if var_to_updt == 0:
@@ -498,7 +514,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 if (opt_vars_cls_old.mxn_ratio_probss[col_idx] ==
                     mxn_ratio_probs):
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.mxn_ratio_probss[col_idx] = mxn_ratio_probs
@@ -508,24 +523,11 @@ class IAAFTSARealization(GTGAlgRealization):
             # n_levels.
             elif (var_to_updt == 1):
 
-                if False:
-                    n_levels_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    n_levels_diff = np.random.choice(
-                        [-1, 0, 1], p=n_levels_probs)
-
-                    n_levels = (
-                        opt_vars_cls_old.n_levelss[col_idx] + n_levels_diff)
-
-                else:
-                    n_levels = opt_vars_cls_old.n_levelss[col_idx] + int(
-                        mxn_ratio_red_rate *
-                        (self._sett_asymm_n_levels_ubd -
-                         self._sett_asymm_n_levels_lbd) * (
-                        -0.5 + (1 * np.random.random())))
+                n_levels = opt_vars_cls_old.n_levelss[col_idx] + int(
+                    mxn_ratio_red_rate *
+                    (self._sett_asymm_n_levels_ubd -
+                     self._sett_asymm_n_levels_lbd) * (
+                    -1 + (2 * np.random.random())))
 
                 n_levels = max(self._sett_asymm_n_levels_lbd, n_levels)
                 n_levels = min(self._sett_asymm_n_levels_ubd, n_levels)
@@ -533,7 +535,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 n_levels = int(n_levels)
 
                 if opt_vars_cls_old.n_levelss[col_idx] == n_levels:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.n_levelss[col_idx] = n_levels
@@ -541,21 +542,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # max_shift_exp.
             elif var_to_updt == 2:
 
-                if False:
-                    max_shift_exp_diff = -0.5 + (1 * np.random.random())
-                    max_shift_exp_diff *= mxn_ratio_red_rate
-
-                    max_shift_exp = (
-                        opt_vars_cls_old.max_shift_exps[col_idx] +
-                        max_shift_exp_diff)
-
-                else:
-                    max_shift_exp = (
-                        opt_vars_cls_old.max_shift_exps[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_max_shift_exp_ubd -
-                             self._sett_asymm_max_shift_exp_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                max_shift_exp = (
+                    opt_vars_cls_old.max_shift_exps[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_max_shift_exp_ubd -
+                         self._sett_asymm_max_shift_exp_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 max_shift_exp = max(
                     self._sett_asymm_max_shift_exp_lbd, max_shift_exp)
@@ -564,7 +556,6 @@ class IAAFTSARealization(GTGAlgRealization):
                     self._sett_asymm_max_shift_exp_ubd, max_shift_exp)
 
                 if opt_vars_cls_old.max_shift_exps[col_idx] == max_shift_exp:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.max_shift_exps[col_idx] = max_shift_exp
@@ -572,24 +563,11 @@ class IAAFTSARealization(GTGAlgRealization):
             # max_shift.
             elif var_to_updt == 3:
 
-                if False:
-                    max_shift_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    max_shift_diff = np.random.choice(
-                        [-1, 0, 1], p=max_shift_probs)
-
-                    max_shift = (
-                        opt_vars_cls_old.max_shifts[col_idx] + max_shift_diff)
-
-                else:
-                    max_shift = opt_vars_cls_old.max_shifts[col_idx] + int(
-                        mxn_ratio_red_rate *
-                        (self._sett_asymm_max_shift_ubd -
-                         self._sett_asymm_max_shift_lbd) * (
-                        -0.5 + (1 * np.random.random())))
+                max_shift = opt_vars_cls_old.max_shifts[col_idx] + int(
+                    mxn_ratio_red_rate *
+                    (self._sett_asymm_max_shift_ubd -
+                     self._sett_asymm_max_shift_lbd) * (
+                    -1 + (2 * np.random.random())))
 
                 max_shift = max(self._sett_asymm_max_shift_lbd, max_shift)
                 max_shift = min(self._sett_asymm_max_shift_ubd, max_shift)
@@ -597,7 +575,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 max_shift = int(max_shift)
 
                 if opt_vars_cls_old.max_shifts[col_idx] == max_shift:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.max_shifts[col_idx] = max_shift
@@ -605,20 +582,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # pre_vals_ratio.
             elif var_to_updt == 4:
 
-                if False:
-                    ratio_diff_pre_vals = -0.5 + (1 * np.random.random())
-
-                    pre_vals_ratio = (
-                        (opt_vars_cls_old.pre_vals_ratios[col_idx]) +
-                        (mxn_ratio_red_rate * ratio_diff_pre_vals))
-
-                else:
-                    pre_vals_ratio = (
-                        opt_vars_cls_old.pre_vals_ratios[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_pre_vals_ratio_ubd -
-                             self._sett_asymm_pre_vals_ratio_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                pre_vals_ratio = (
+                    opt_vars_cls_old.pre_vals_ratios[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_pre_vals_ratio_ubd -
+                         self._sett_asymm_pre_vals_ratio_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 pre_vals_ratio = max(
                     self._sett_asymm_pre_vals_ratio_lbd, pre_vals_ratio)
@@ -629,7 +598,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 if (opt_vars_cls_old.pre_vals_ratios[col_idx] ==
                     pre_vals_ratio):
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.pre_vals_ratios[col_idx] = pre_vals_ratio
@@ -637,26 +605,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # asymm_n_iters
             elif var_to_updt == 5:
 
-                if False:
-                    asymm_n_iters_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    asymm_n_iters_diff = np.random.choice(
-                        [-1, 0, 1], p=asymm_n_iters_probs)
-
-                    asymm_n_iters = (
-                        opt_vars_cls_old.asymm_n_iterss[col_idx] +
-                        asymm_n_iters_diff)
-
-                else:
-                    asymm_n_iters = (
-                        opt_vars_cls_old.asymm_n_iterss[col_idx] + int(
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_n_iters_ubd -
-                             self._sett_asymm_n_iters_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                asymm_n_iters = (
+                    opt_vars_cls_old.asymm_n_iterss[col_idx] + int(
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_n_iters_ubd -
+                         self._sett_asymm_n_iters_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 asymm_n_iters = max(
                     self._sett_asymm_n_iters_lbd, asymm_n_iters)
@@ -667,7 +621,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 asymm_n_iters = int(asymm_n_iters)
 
                 if opt_vars_cls_old.asymm_n_iterss[col_idx] == asymm_n_iters:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.asymm_n_iterss[col_idx] = asymm_n_iters
@@ -675,19 +628,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # prob_center.
             elif var_to_updt == 6:
 
-                if False:
-                    diff_pre_vals = -0.5 + (1 * np.random.random())
-
-                    prob_center = opt_vars_cls_old.prob_centers[col_idx] + (
-                        mxn_ratio_red_rate * diff_pre_vals)
-
-                else:
-                    prob_center = (
-                        opt_vars_cls_old.prob_centers[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_prob_center_ubd -
-                             self._sett_asymm_prob_center_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                prob_center = (
+                    opt_vars_cls_old.prob_centers[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_prob_center_ubd -
+                         self._sett_asymm_prob_center_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 prob_center = max(
                     self._sett_asymm_prob_center_lbd, prob_center)
@@ -696,7 +642,6 @@ class IAAFTSARealization(GTGAlgRealization):
                     self._sett_asymm_prob_center_ubd, prob_center)
 
                 if opt_vars_cls_old.prob_centers[col_idx] == prob_center:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.prob_centers[col_idx] = prob_center
@@ -704,19 +649,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # pre_val_exp.
             elif var_to_updt == 7:
 
-                if False:
-                    diff_pre_vals = -0.5 + (1 * np.random.random())
-
-                    pre_val_exp = opt_vars_cls_old.pre_val_exps[col_idx] + (
-                        mxn_ratio_red_rate * diff_pre_vals)
-
-                else:
-                    pre_val_exp = (
-                        opt_vars_cls_old.pre_val_exps[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_pre_val_exp_ubd -
-                             self._sett_asymm_pre_val_exp_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                pre_val_exp = (
+                    opt_vars_cls_old.pre_val_exps[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_pre_val_exp_ubd -
+                         self._sett_asymm_pre_val_exp_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 pre_val_exp = max(
                     self._sett_asymm_pre_val_exp_lbd, pre_val_exp)
@@ -725,7 +663,6 @@ class IAAFTSARealization(GTGAlgRealization):
                     self._sett_asymm_pre_val_exp_ubd, pre_val_exp)
 
                 if opt_vars_cls_old.pre_val_exps[col_idx] == pre_val_exp:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.pre_val_exps[col_idx] = pre_val_exp
@@ -733,19 +670,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # crt_val_exp.
             elif var_to_updt == 8:
 
-                if False:
-                    diff_pre_vals = -0.5 + (1 * np.random.random())
-
-                    crt_val_exp = opt_vars_cls_old.crt_val_exps[col_idx] + (
-                        mxn_ratio_red_rate * diff_pre_vals)
-
-                else:
-                    crt_val_exp = (
-                        opt_vars_cls_old.crt_val_exps[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_crt_val_exp_ubd -
-                             self._sett_asymm_crt_val_exp_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                crt_val_exp = (
+                    opt_vars_cls_old.crt_val_exps[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_crt_val_exp_ubd -
+                         self._sett_asymm_crt_val_exp_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 crt_val_exp = max(
                     self._sett_asymm_crt_val_exp_lbd, crt_val_exp)
@@ -754,7 +684,6 @@ class IAAFTSARealization(GTGAlgRealization):
                     self._sett_asymm_crt_val_exp_ubd, crt_val_exp)
 
                 if opt_vars_cls_old.crt_val_exps[col_idx] == crt_val_exp:
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.crt_val_exps[col_idx] = crt_val_exp
@@ -762,26 +691,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # level_thresh_cnst.
             elif var_to_updt == 9:
 
-                if False:
-                    level_thresh_cnst_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    level_thresh_cnst_diff = np.random.choice(
-                        [-1, 0, 1], p=level_thresh_cnst_probs)
-
-                    level_thresh_cnst = (
-                        opt_vars_cls_old.level_thresh_cnsts[col_idx] +
-                        level_thresh_cnst_diff)
-
-                else:
-                    level_thresh_cnst = (
-                        opt_vars_cls_old.level_thresh_cnsts[col_idx] + int(
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_level_thresh_cnst_ubd -
-                             self._sett_asymm_level_thresh_cnst_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                level_thresh_cnst = (
+                    opt_vars_cls_old.level_thresh_cnsts[col_idx] + int(
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_level_thresh_cnst_ubd -
+                         self._sett_asymm_level_thresh_cnst_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 level_thresh_cnst = max(
                     self._sett_asymm_level_thresh_cnst_lbd, level_thresh_cnst)
@@ -794,7 +709,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 if (opt_vars_cls_old.level_thresh_cnsts[col_idx] ==
                     level_thresh_cnst):
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.level_thresh_cnsts[col_idx] = (
@@ -803,26 +717,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # level_thresh_slp.
             elif var_to_updt == 10:
 
-                if False:
-                    level_thresh_slp_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    level_thresh_slp_diff = np.random.choice(
-                        [-1, 0, 1], p=level_thresh_slp_probs)
-
-                    level_thresh_slp = (
-                        opt_vars_cls_old.level_thresh_slps[col_idx] +
-                        level_thresh_slp_diff)
-
-                else:
-                    level_thresh_slp = (
-                        opt_vars_cls_old.level_thresh_slps[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_level_thresh_slp_ubd -
-                             self._sett_asymm_level_thresh_slp_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                level_thresh_slp = (
+                    opt_vars_cls_old.level_thresh_slps[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_level_thresh_slp_ubd -
+                         self._sett_asymm_level_thresh_slp_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 level_thresh_slp = max(
                     self._sett_asymm_level_thresh_slp_lbd, level_thresh_slp)
@@ -833,7 +733,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 if (opt_vars_cls_old.level_thresh_slps[col_idx] ==
                     level_thresh_slp):
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.level_thresh_slps[col_idx] = (
@@ -842,26 +741,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # rand_err_sclr_cnst
             elif var_to_updt == 11:
 
-                if False:
-                    rand_err_sclr_cnst_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    rand_err_sclr_cnst_diff = np.random.choice(
-                        [-1, 0, 1], p=rand_err_sclr_cnst_probs)
-
-                    rand_err_sclr_cnst = (
-                        opt_vars_cls_old.rand_err_sclr_cnsts[col_idx] +
-                        rand_err_sclr_cnst_diff)
-
-                else:
-                    rand_err_sclr_cnst = (
-                        opt_vars_cls_old.rand_err_sclr_cnsts[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_rand_err_sclr_cnst_ubd -
-                             self._sett_asymm_rand_err_sclr_cnst_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                rand_err_sclr_cnst = (
+                    opt_vars_cls_old.rand_err_sclr_cnsts[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_rand_err_sclr_cnst_ubd -
+                         self._sett_asymm_rand_err_sclr_cnst_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 rand_err_sclr_cnst = max(
                     self._sett_asymm_rand_err_sclr_cnst_lbd,
@@ -874,7 +759,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 if (opt_vars_cls_old.rand_err_sclr_cnsts[col_idx] ==
                     rand_err_sclr_cnst):
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.rand_err_sclr_cnsts[col_idx] = (
@@ -883,26 +767,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # rand_err_sclr_rel
             elif var_to_updt == 12:
 
-                if False:
-                    rand_err_sclr_rel_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    rand_err_sclr_rel_diff = np.random.choice(
-                        [-1, 0, 1], p=rand_err_sclr_rel_probs)
-
-                    rand_err_sclr_rel = (
-                        opt_vars_cls_old.rand_err_sclr_rels[col_idx] +
-                        rand_err_sclr_rel_diff)
-
-                else:
-                    rand_err_sclr_rel = (
-                        opt_vars_cls_old.rand_err_sclr_rels[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_rand_err_sclr_rel_ubd -
-                             self._sett_asymm_rand_err_sclr_rel_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                rand_err_sclr_rel = (
+                    opt_vars_cls_old.rand_err_sclr_rels[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_rand_err_sclr_rel_ubd -
+                         self._sett_asymm_rand_err_sclr_rel_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 rand_err_sclr_rel = max(
                     self._sett_asymm_rand_err_sclr_rel_lbd, rand_err_sclr_rel)
@@ -913,7 +783,6 @@ class IAAFTSARealization(GTGAlgRealization):
                 if (opt_vars_cls_old.rand_err_sclr_rels[col_idx] ==
                     rand_err_sclr_rel):
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.rand_err_sclr_rels[col_idx] = (
@@ -922,25 +791,12 @@ class IAAFTSARealization(GTGAlgRealization):
             # probs_exp
             elif var_to_updt == 13:
 
-                if False:
-                    probs_exp_probs = [
-                        0.5 * mxn_ratio_red_rate,
-                        1.0 - mxn_ratio_red_rate,
-                        0.5 * mxn_ratio_red_rate]
-
-                    probs_exp_diff = np.random.choice(
-                        [-1, 0, 1], p=probs_exp_probs)
-
-                    probs_exp = (
-                        opt_vars_cls_old.probs_exps[col_idx] + probs_exp_diff)
-
-                else:
-                    probs_exp = (
-                        opt_vars_cls_old.probs_exps[col_idx] + (
-                            mxn_ratio_red_rate *
-                            (self._sett_asymm_probs_exp_ubd -
-                             self._sett_asymm_probs_exp_lbd) * (
-                            -0.5 + (1 * np.random.random()))))
+                probs_exp = (
+                    opt_vars_cls_old.probs_exps[col_idx] + (
+                        mxn_ratio_red_rate *
+                        (self._sett_asymm_probs_exp_ubd -
+                         self._sett_asymm_probs_exp_lbd) * (
+                        -1 + (2 * np.random.random()))))
 
                 probs_exp = max(self._sett_asymm_probs_exp_lbd, probs_exp)
 
@@ -948,7 +804,6 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 if opt_vars_cls_old.probs_exps[col_idx] == probs_exp:
 
-                    search_atpts += 1
                     continue
 
                 opt_vars_cls_new.probs_exps[col_idx] = probs_exp
@@ -956,9 +811,7 @@ class IAAFTSARealization(GTGAlgRealization):
             else:
                 raise NotImplementedError(f'var_to_updt: {var_to_updt}!')
 
-            var_updt_flag = True
-
-            search_atpts += 1
+            updt_var_idxs.append(var_to_updt)
         #======================================================================
 
         return opt_vars_cls_new
@@ -1523,9 +1376,9 @@ class IAAFTSARealization(GTGAlgRealization):
         order_sdiff = np.nan
         order_sdiffs_break_thresh = 1e-3
 
-        readjust_ft_iters = 2
-        phs_spec_swap_iter = 2 * self._data_ref_shape[1]
+        readjust_ft_iters = 1 + int(self._sett_asymm_set_flag) * 2
 
+        phs_spec_swap_iter = 0  # 2 * self._data_ref_shape[1]
         # phs_spec_swap_iter = iaaft_n_iters * 100
 
         if readjust_ft_iters > 1:
@@ -1565,7 +1418,12 @@ class IAAFTSARealization(GTGAlgRealization):
                 sim_phs_margs = np.angle(sim_ft_margs)
                 sim_phs_probs = np.angle(sim_ft_probs)
 
-                if j and (i == 0):
+                if (
+                    (self._sett_asymm_set_flag) and
+                    (not plain_iaaft_flag) and
+                    (j) and
+                    (i == 0)
+                    ):
 
                     # if False:
                     if True:
@@ -1683,7 +1541,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 # Marginals cross.
                 if self._sett_obj_any_ms_flag:
 
-                    if i <= phs_spec_swap_iter:
+                    if True:  # i <= phs_spec_swap_iter:
                         sim_phs = (
                             sim_phs_margs[:, [stn_ctr]] +
                             phs_spec_data - phs_spec_data[:, [stn_ctr]])
@@ -1727,7 +1585,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 # Ranks cross.
                 if self._sett_obj_any_ms_flag:
 
-                    if i <= phs_spec_swap_iter:
+                    if True:  # i <= phs_spec_swap_iter:
                         sim_phs = (
                             sim_phs_probs[:, [stn_ctr]] +
                             phs_spec_probs - phs_spec_probs[:, [stn_ctr]])
@@ -2203,6 +2061,9 @@ class IAAFTSARealization(GTGAlgRealization):
         self._dur_tmr_cumm_n_calls['_gen_gnrc_rltzn'] += 1
 
         if self._alg_ann_runn_auto_init_temp_search_flag:
+
+            assert not self._rltzn_prm_max_srch_atpts_flag, (
+                'Something was wrong with parameter sampling!')
 
             ret = sum(acpts_rjts_all) / len(acpts_rjts_all), temp
 

@@ -23,7 +23,7 @@ def main():
     main_dir = Path(
         r'P:\Synchronize\IWS\Testings\fourtrans_practice\iaaftsa')
 
-    main_dir /= r'test_prec_04'
+    main_dir /= r'test_hbv_all_03__phs_swap'
 
     os.chdir(main_dir)
 
@@ -32,9 +32,9 @@ def main():
     # If you want the time series to have an index.
     # Should have the correct length.
 
-    time_idx = None
+    # time_idx = None
 
-    # time_idx = pd.date_range('1991-01-01', '1995-12-31', freq='D')
+    time_idx = pd.date_range('1964-10-01', '1974-11-29', freq='D')
 
     # time_idx = pd.date_range(
     #     '2010-01-01 00:00:00', '2014-12-31 23:00:00', freq='H')

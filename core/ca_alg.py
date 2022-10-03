@@ -33,6 +33,9 @@ class IAAFTSAAlgLagNthWts(GTGAlgLagNthWts):
         for _ in range(beg_iter, end_iter):
             opt_vars_cls = self._get_next_iter_vars(1.0, opt_vars_cls)
 
+            assert not self._rltzn_prm_max_srch_atpts_flag, (
+                'Something was wrong with parameter sampling!')
+
             self._update_sim(opt_vars_cls, False)
 
             self._get_obj_ftn_val()
@@ -120,6 +123,9 @@ class IAAFTSAAlgLabelWts(GTGAlgLabelWts):
         for _ in range(beg_iter, end_iter):
             opt_vars_cls = self._get_next_iter_vars(1.0, opt_vars_cls)
 
+            assert not self._rltzn_prm_max_srch_atpts_flag, (
+                'Something was wrong with parameter sampling!')
+
             self._update_sim(opt_vars_cls, False)
 
             self._get_obj_ftn_val()
@@ -204,6 +210,9 @@ class IAAFTSAAlgAutoObjWts(GTGAlgAutoObjWts):
 
         for _ in range(beg_iter, end_iter):
             opt_vars_cls = self._get_next_iter_vars(1.0, opt_vars_cls)
+
+            assert not self._rltzn_prm_max_srch_atpts_flag, (
+                'Something was wrong with parameter sampling!')
 
             self._update_sim(opt_vars_cls, False)
 
