@@ -526,7 +526,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 n_levels = opt_vars_cls_old.n_levelss[col_idx] + int(
                     mxn_ratio_red_rate *
                     (self._sett_asymm_n_levels_ubd -
-                     self._sett_asymm_n_levels_lbd) * (
+                     self._sett_asymm_n_levels_lbd + 1) * (
                     -1 + (2 * np.random.random())))
 
                 n_levels = max(self._sett_asymm_n_levels_lbd, n_levels)
@@ -566,7 +566,7 @@ class IAAFTSARealization(GTGAlgRealization):
                 max_shift = opt_vars_cls_old.max_shifts[col_idx] + int(
                     mxn_ratio_red_rate *
                     (self._sett_asymm_max_shift_ubd -
-                     self._sett_asymm_max_shift_lbd) * (
+                     self._sett_asymm_max_shift_lbd + 1) * (
                     -1 + (2 * np.random.random())))
 
                 max_shift = max(self._sett_asymm_max_shift_lbd, max_shift)
@@ -609,7 +609,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     opt_vars_cls_old.asymm_n_iterss[col_idx] + int(
                         mxn_ratio_red_rate *
                         (self._sett_asymm_n_iters_ubd -
-                         self._sett_asymm_n_iters_lbd) * (
+                         self._sett_asymm_n_iters_lbd + 1) * (
                         -1 + (2 * np.random.random()))))
 
                 asymm_n_iters = max(
@@ -695,7 +695,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     opt_vars_cls_old.level_thresh_cnsts[col_idx] + int(
                         mxn_ratio_red_rate *
                         (self._sett_asymm_level_thresh_cnst_ubd -
-                         self._sett_asymm_level_thresh_cnst_lbd) * (
+                         self._sett_asymm_level_thresh_cnst_lbd + 1) * (
                         -1 + (2 * np.random.random()))))
 
                 level_thresh_cnst = max(
@@ -1376,10 +1376,10 @@ class IAAFTSARealization(GTGAlgRealization):
         order_sdiff = np.nan
         order_sdiffs_break_thresh = 1e-3
 
-        readjust_ft_iters = 1 + int(self._sett_asymm_set_flag) * 2
+        readjust_ft_iters = 1 + int(self._sett_asymm_set_flag) * 1
 
-        phs_spec_swap_iter = 0  # 2 * self._data_ref_shape[1]
-        # phs_spec_swap_iter = iaaft_n_iters * 100
+        # phs_spec_swap_iter = 0  # 2 * self._data_ref_shape[1]
+        phs_spec_swap_iter = iaaft_n_iters * 100
 
         if readjust_ft_iters > 1:
 

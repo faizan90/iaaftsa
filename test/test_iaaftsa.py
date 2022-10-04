@@ -60,14 +60,14 @@ def main():
 #==============================================================================
     in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
 
-    sim_label = 'test_hbv_all_05__mult_prms_search'  # next:
+    sim_label = 'test_hbv_inputs_01__phss_swap_no'  # next:
 
-    labels = 'q_obs;prec;pet;temp'.split(';')  # q_obs;prec;pet;temp
+    labels = 'prec;pet;temp'.split(';')  # q_obs;prec
 
     time_fmt = '%Y-%m-%d'
 
     beg_time = '1964-10-01'
-    end_time = '1974-11-29'
+    end_time = '1970-11-29'
 
     # beg_time = '1961-10-01'
     # end_time = '2015-11-30'
@@ -235,8 +235,8 @@ def main():
     match_probs_ms_pair_ft_flag = True
 
     scorr_flag = False
-    # asymm_type_1_flag = False
-    # asymm_type_2_flag = False
+    asymm_type_1_flag = False
+    asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -245,21 +245,21 @@ def main():
     asymm_type_1_ms_flag = False
     asymm_type_2_ms_flag = False
     ecop_dens_ms_flag = False
-    # match_data_ft_flag = False
-    # match_probs_ft_flag = False
-    asymm_type_1_ft_flag = False
-    asymm_type_2_ft_flag = False
+    match_data_ft_flag = False
+    match_probs_ft_flag = False
+    # asymm_type_1_ft_flag = False
+    # asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
     asymm_type_1_ms_ft_flag = False
     asymm_type_2_ms_ft_flag = False
-    etpy_ft_flag = False
+    # etpy_ft_flag = False
     etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
     match_data_ms_ft_flag = False
     match_probs_ms_ft_flag = False
-    # match_data_ms_pair_ft_flag = False
-    # match_probs_ms_pair_ft_flag = False
+    match_data_ms_pair_ft_flag = False
+    match_probs_ms_pair_ft_flag = False
 
     lag_steps = np.arange(1, 21)
     ecop_bins = 25
@@ -297,18 +297,18 @@ def main():
     # probs_exp_bds = (0.0, 10.0)
 
     n_levels_bds = (1, 200)
-    max_shift_exp_bds = (0.0, 20.0)
-    max_shift_bds = (-30, 30)
-    pre_values_ratio_bds = (0.0, 1.0)
+    max_shift_exp_bds = (0.5, 5.0)
+    max_shift_bds = (1, 30)
+    pre_values_ratio_bds = (0.9, 0.9999)
     asymmetrize_iterations_bds = (0, 4)
-    prob_center_bds = (0.0, 1.0)
-    pre_val_exp_bds = (0.8, 1.3)
-    crt_val_exp_bds = (0.8, 1.3)
+    prob_center_bds = (0.0, 0.1)
+    pre_val_exp_bds = (0.9, 1.1)
+    crt_val_exp_bds = (0.9, 1.1)
     level_thresh_cnst_bds = (-1000, +1000)
     level_thresh_slp_bds = (-20.0, +20.0)
     rand_err_sclr_cnst_bds = (-5.0, +5.0)
-    rand_err_sclr_rel_bds = (-2.0, +2.0)
-    probs_exp_bds = (0.50, 1.5)
+    rand_err_sclr_rel_bds = (-0.1, +0.1)
+    probs_exp_bds = (0.95, 1.05)
 
     # weights = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.005], dtype=np.float64)
     # auto_wts_set_flag = False
@@ -317,7 +317,7 @@ def main():
 
     weights = None
     auto_wts_set_flag = True
-    wts_n_iters = 5000
+    wts_n_iters = 1000
     obj_wts_exp = 0.65
 
     min_period = None
@@ -373,16 +373,16 @@ def main():
 
     if long_test_flag:
         initial_annealing_temperature = 1e5
-        temperature_reduction_ratio = 0.95
-        update_at_every_iteration_no = 300
-        maximum_iterations = int(1e7)
+        temperature_reduction_ratio = 0.5
+        update_at_every_iteration_no = 100
+        maximum_iterations = int(2e3)
         maximum_without_change_iterations = 20000
         objective_tolerance = 1e-3
-        objective_tolerance_iterations = update_at_every_iteration_no * 30
+        objective_tolerance_iterations = update_at_every_iteration_no * 5
         stop_acpt_rate = 1e-2
-        maximum_iterations_without_updating_best = 20000
+        maximum_iterations_without_updating_best = 10000
 
-        temperature_lower_bound = 1e5
+        temperature_lower_bound = 1e3
         temperature_upper_bound = 5e9
         n_iterations_per_attempt = update_at_every_iteration_no
         acceptance_lower_bound = 0.75
@@ -391,8 +391,8 @@ def main():
         ramp_rate = 1.2
         mixing_ratio_reduction_rate = 0.01
 
-        acceptance_rate_iterations = update_at_every_iteration_no * 30
-        acceptance_threshold_ratio = 1e-3
+        acceptance_rate_iterations = update_at_every_iteration_no * 5
+        acceptance_threshold_ratio = 1e-2
 
     else:
         initial_annealing_temperature = 1e-10
