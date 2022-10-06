@@ -23,7 +23,7 @@ def main():
     main_dir = Path(
         r'P:\Synchronize\IWS\Testings\fourtrans_practice\iaaftsa')
 
-    main_dir /= r'test_hbv_all_05__mult_prms_search'
+    main_dir /= r'test_ppt_67__phss_swap_ms'
 
     os.chdir(main_dir)
 
@@ -34,7 +34,7 @@ def main():
 
     # time_idx = None
 
-    time_idx = pd.date_range('1964-10-01', '1974-11-29', freq='D')
+    time_idx = pd.date_range('1991-01-01', '1999-12-30', freq='D')
 
     # time_idx = pd.date_range(
     #     '2010-01-01 00:00:00', '2014-12-31 23:00:00', freq='H')

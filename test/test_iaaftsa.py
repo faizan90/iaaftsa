@@ -58,16 +58,16 @@ def main():
 #==============================================================================
 #    Daily HBV sim
 #==============================================================================
-    in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
-
-    sim_label = 'test_hbv_inputs_01__phss_swap_no'  # next:
-
-    labels = 'prec;pet;temp'.split(';')  # q_obs;prec
-
-    time_fmt = '%Y-%m-%d'
-
-    beg_time = '1964-10-01'
-    end_time = '1970-11-29'
+    # in_file_path = Path(r'hbv_sim__1963_2015_2.csv')
+    #
+    # sim_label = 'test_q_obs_prec_07_test'  # next:
+    #
+    # labels = 'prec;q_obs'.split(';')  # q_obs;prec;pet;temp
+    #
+    # time_fmt = '%Y-%m-%d'
+    #
+    # beg_time = '1964-10-01'
+    # end_time = '1970-11-29'
 
     # beg_time = '1961-10-01'
     # end_time = '2015-11-30'
@@ -75,17 +75,17 @@ def main():
 #==============================================================================
 #    Daily ppt.
 #==============================================================================
-    # in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
-    #
-    # sim_label = 'test_ppt_64__phss_swap_ms'  # next:
-    #
-    # labels = ['P1162', 'P1197']  # , 'cp']
-    # # labels = ['P1162']
-    #
-    # time_fmt = '%Y-%m-%d'
-    #
-    # beg_time = '1991-01-01'
-    # end_time = '1999-12-31'
+    in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
+
+    sim_label = 'test_ppt_69__phss_swap_ms'  # next:
+
+    labels = ['P1162', 'P1197', 'P1311', 'P1351']  # , 'cp']
+    # labels = ['P1162']
+
+    time_fmt = '%Y-%m-%d'
+
+    beg_time = '1991-01-01'
+    end_time = '1999-12-31'
 
 #==============================================================================
 #    Hourly ppt.
@@ -203,7 +203,7 @@ def main():
     wts_flag = True
     # wts_flag = False
 
-    n_reals = 16  # A multiple of n_cpus.
+    n_reals = 8  # 16  # A multiple of n_cpus.
     outputs_dir = main_dir / sim_label
     n_cpus = 'auto'
 
@@ -236,7 +236,7 @@ def main():
 
     scorr_flag = False
     asymm_type_1_flag = False
-    asymm_type_2_flag = False
+    # asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -245,21 +245,21 @@ def main():
     asymm_type_1_ms_flag = False
     asymm_type_2_ms_flag = False
     ecop_dens_ms_flag = False
-    match_data_ft_flag = False
+    # match_data_ft_flag = False
     match_probs_ft_flag = False
-    # asymm_type_1_ft_flag = False
-    # asymm_type_2_ft_flag = False
+    asymm_type_1_ft_flag = False
+    asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
-    asymm_type_1_ms_ft_flag = False
-    asymm_type_2_ms_ft_flag = False
-    # etpy_ft_flag = False
-    etpy_ms_ft_flag = False
+    # asymm_type_1_ms_ft_flag = False
+    # asymm_type_2_ms_ft_flag = False
+    etpy_ft_flag = False
+    # etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
-    match_data_ms_ft_flag = False
-    match_probs_ms_ft_flag = False
-    match_data_ms_pair_ft_flag = False
-    match_probs_ms_pair_ft_flag = False
+    # match_data_ms_ft_flag = False
+    # match_probs_ms_ft_flag = False
+    # match_data_ms_pair_ft_flag = False
+    # match_probs_ms_pair_ft_flag = False
 
     lag_steps = np.arange(1, 21)
     ecop_bins = 25
@@ -280,7 +280,7 @@ def main():
     iaaft_n_iterations_max = 10  # Per stn. This can be an optimization parameter.
 
     use_asymmetrize_function_flag = True
-    # use_asymmetrize_function_flag = False
+    use_asymmetrize_function_flag = False
     asymmetrize_type = 2
     # n_levels_bds = (0, 200)
     # max_shift_exp_bds = (0.5, 5.0)
@@ -326,16 +326,16 @@ def main():
     # keep_beyond_flag = False
 
     lags_nths_wts_flag = True
-    lags_nths_wts_flag = False
+    # lags_nths_wts_flag = False
     lags_nths_exp = 2.0
-    lags_nths_n_iters = 200
+    lags_nths_n_iters = 1000
     lags_nths_cumm_wts_contrib = 0.9999
     lags_nths_n_thresh = max(lag_steps.size, nth_ords.size)
 
     label_wts_flag = True
     label_wts_flag = False
-    label_exp = 2.0
-    label_n_iters = 100
+    label_exp = 1.0
+    label_n_iters = 1000
 
     cdf_penalt_flag = True
     cdf_penalt_flag = False
@@ -372,18 +372,18 @@ def main():
     max_lags_to_plot = 4
 
     if long_test_flag:
-        initial_annealing_temperature = 1e5
-        temperature_reduction_ratio = 0.5
+        initial_annealing_temperature = 1e2
+        temperature_reduction_ratio = 0.55
         update_at_every_iteration_no = 100
-        maximum_iterations = int(2e3)
+        maximum_iterations = int(5e3)
         maximum_without_change_iterations = 20000
         objective_tolerance = 1e-3
         objective_tolerance_iterations = update_at_every_iteration_no * 5
         stop_acpt_rate = 1e-2
         maximum_iterations_without_updating_best = 10000
 
-        temperature_lower_bound = 1e3
-        temperature_upper_bound = 5e9
+        temperature_lower_bound = 1e9
+        temperature_upper_bound = 5e15
         n_iterations_per_attempt = update_at_every_iteration_no
         acceptance_lower_bound = 0.75
         acceptance_upper_bound = 0.85

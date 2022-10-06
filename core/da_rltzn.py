@@ -1378,8 +1378,8 @@ class IAAFTSARealization(GTGAlgRealization):
 
         readjust_ft_iters = 1 + int(self._sett_asymm_set_flag) * 1
 
-        # phs_spec_swap_iter = 0  # 2 * self._data_ref_shape[1]
-        phs_spec_swap_iter = iaaft_n_iters * 100
+        phs_spec_swap_iter = 0  # 2 * self._data_ref_shape[1]
+        # phs_spec_swap_iter = iaaft_n_iters * 100
 
         if readjust_ft_iters > 1:
 
