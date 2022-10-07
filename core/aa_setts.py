@@ -61,10 +61,18 @@ class IAAFTSASettings(GTGSettings):
         self._sett_prsrv_coeffs_max_prd = None
         self._sett_prsrv_coeffs_beyond_flag = None
 
+        # PSC.
+        self._sett_psc_use_margs_flag = None
+        self._sett_psc_use_probs_flag = None
+        self._sett_psc_phs_swap_flag = None
+        self._sett_psc_ss_flag = None
+        self._sett_psc_ms_flag = None
+
         # Flags.
         self._sett_ann_iaaftsa_sa_set_flag = False
         self._sett_asymm_set_flag = False
         self._sett_prsrv_coeffs_set_flag = False
+        self._sett_psc_set_flag = False
         self._sett_iaaftsa_sett_verify_flag = False
         return
 
@@ -100,8 +108,8 @@ class IAAFTSASettings(GTGSettings):
             considered as zero. Must be >= 0 and < 1.
         iaaft_n_iterations_max : integer
             The maximum number of iterations to perform for the IAAFT
-            algorithm, to match the mariginals and probability power spectra.
-            Should be more than zero.
+            algorithm per station, to match the mariginals and probability
+            power spectra. Should be more than zero.
         '''
 
         if self._vb:
@@ -762,10 +770,103 @@ class IAAFTSASettings(GTGSettings):
         self._sett_prsrv_coeffs_set_flag = True
         return
 
+    def set_iaaft_psc_settings(
+            self,
+            use_margs_flag,
+            use_probs_flag,
+            swap_phss_spec_flag,
+            apply_ss_flag,
+            apply_ms_flag):
+
+        '''
+        PSC: Pearson and Spearman correlation.
+
+        Phase spectrum swapping for the simulated series.
+        It is done for the single-site case only. Multisite worked better
+        if this correction was not applied.
+
+        Parameters:
+        -----------
+        swap_phss_spec_flag : bool
+            Whether to swap the marignal's phase spectrum with that of
+            the rank's. This allows for the simulated series to have better
+            pearson and spearman correlations. Without this, it is close
+            to impossible to have the spearman correaltion's of the
+            simulated series rise above that of the reference.
+        '''
+
+        if self._vb:
+            print_sl()
+
+            print(
+                'Setting PSC parameters for IAAFTSA...\n')
+
+        assert isinstance(use_margs_flag, bool), (
+            'use_margs_flag not a boolean!')
+
+        assert isinstance(use_probs_flag, bool), (
+            'use_probs_flag not a boolean!')
+
+        assert any([use_margs_flag, use_probs_flag]), (
+            'At least one of the margs or probs flags should be True!')
+
+        assert isinstance(swap_phss_spec_flag, bool), (
+            'swap_flag not a boolean!')
+
+        if swap_phss_spec_flag:
+            assert use_margs_flag and use_probs_flag, (
+                'Both use_margs_flag and use_probs_flag should be True if '
+                'swap_phss_spec_flag is True!')
+
+        assert isinstance(apply_ss_flag, bool), (
+            'apply_ss_flag not a boolean!')
+
+        assert isinstance(apply_ms_flag, bool), (
+            'apply_ms_flag not a boolean!')
+
+        assert any([apply_ss_flag, apply_ms_flag]), (
+            'At least one of the ss or ms flags should be True!')
+
+        self._sett_psc_use_margs_flag = use_margs_flag
+        self._sett_psc_use_probs_flag = use_margs_flag
+        self._sett_psc_phs_swap_flag = swap_phss_spec_flag
+        self._sett_psc_ss_flag = apply_ss_flag
+        self._sett_psc_ms_flag = apply_ms_flag
+
+        if self._vb:
+
+            print(
+                'Use marginals flag:',
+                self._sett_psc_use_margs_flag)
+
+            print(
+                'Use probabilities flag:',
+                self._sett_psc_use_probs_flag)
+
+            print(
+                'Swap phase spectrum flag:',
+                self._sett_psc_phs_swap_flag)
+
+            print(
+                'Apply single-site IAAFT flag:',
+                self._sett_psc_ss_flag)
+
+            print(
+                'Apply multi-site IAAFT flag:',
+                self._sett_psc_ms_flag)
+
+            print_el()
+
+        self._sett_psc_set_flag = True
+        return
+
     def verify(self):
 
         assert self._sett_ann_iaaftsa_sa_set_flag, (
             'Call set_iaaft_sa_settings first!')
+
+        assert self._sett_psc_set_flag, (
+            'Call set_iaaft_psc_settings first!')
 
         GTGSettings._GTGSettings__verify(self)
 

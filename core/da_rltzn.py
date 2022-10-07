@@ -1347,9 +1347,6 @@ class IAAFTSARealization(GTGAlgRealization):
         mag_spec_data = self._rr.data_ft_coeffs_mags.copy()
         mag_spec_probs = self._rr.probs_ft_coeffs_mags.copy()
 
-        spec_norm_vals_data = mag_spec_data[1:,:].sum(axis=0)
-        spec_norm_vals_probs = mag_spec_probs[1:,:].sum(axis=0)
-
         phs_spec_data = self._rr.data_ft_coeffs_phss.copy()
         phs_spec_probs = self._rr.probs_ft_coeffs_phss.copy()
 
@@ -1378,28 +1375,31 @@ class IAAFTSARealization(GTGAlgRealization):
 
         readjust_ft_iters = 1 + int(self._sett_asymm_set_flag) * 1
 
-        phs_spec_swap_iter = 0  # 2 * self._data_ref_shape[1]
-        # phs_spec_swap_iter = iaaft_n_iters * 100
-
         if readjust_ft_iters > 1:
 
-            ref_pwr = mag_spec_data ** 2
-            ref_pwr[0] = 0
+            if self._sett_psc_use_margs_flag:
+                ref_pwr = mag_spec_data ** 2
+                ref_pwr[0] = 0
 
-            ref_pcorrs = np.fft.irfft(ref_pwr, axis=0)
-            ref_pcorrs /= ref_pcorrs[0]
+                ref_pcorrs = np.fft.irfft(ref_pwr, axis=0)
+                ref_pcorrs /= ref_pcorrs[0]
 
-            ref_pcorrs = np.concatenate(
-                (ref_pcorrs, ref_pcorrs[[0],:]), axis=0)
+                ref_pcorrs = np.concatenate(
+                    (ref_pcorrs, ref_pcorrs[[0],:]), axis=0)
 
-            ref_pwr = mag_spec_probs ** 2
-            ref_pwr[0] = 0
+                spec_norm_vals_data = mag_spec_data[1:,:].sum(axis=0)
 
-            ref_scorrs = np.fft.irfft(ref_pwr, axis=0)
-            ref_scorrs /= ref_scorrs[0]
+            if self._sett_psc_use_probs_flag:
+                ref_pwr = mag_spec_probs ** 2
+                ref_pwr[0] = 0
 
-            ref_scorrs = np.concatenate(
-                (ref_scorrs, ref_scorrs[[0],:]), axis=0)
+                ref_scorrs = np.fft.irfft(ref_pwr, axis=0)
+                ref_scorrs /= ref_scorrs[0]
+
+                ref_scorrs = np.concatenate(
+                    (ref_scorrs, ref_scorrs[[0],:]), axis=0)
+
+                spec_norm_vals_probs = mag_spec_probs[1:,:].sum(axis=0)
 
             spec_crctn_cnst = 2.0
 
@@ -1412,11 +1412,13 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 sim_ift = np.zeros_like(data)
 
-                sim_ft_margs = np.fft.rfft(data, axis=0)
-                sim_ft_probs = np.fft.rfft(probs, axis=0)
+                if self._sett_psc_use_margs_flag:
+                    sim_ft_margs = np.fft.rfft(data, axis=0)
+                    sim_phs_margs = np.angle(sim_ft_margs)
 
-                sim_phs_margs = np.angle(sim_ft_margs)
-                sim_phs_probs = np.angle(sim_ft_probs)
+                if self._sett_psc_use_probs_flag:
+                    sim_ft_probs = np.fft.rfft(probs, axis=0)
+                    sim_phs_probs = np.angle(sim_ft_probs)
 
                 if (
                     (self._sett_asymm_set_flag) and
@@ -1426,7 +1428,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     ):
 
                     # if False:
-                    if True:
+                    if self._sett_psc_use_margs_flag:
                         mag_spec_data = self._get_adj_mag_spec(
                             sim_ft_margs,
                             spec_crctn_cnst,
@@ -1439,7 +1441,7 @@ class IAAFTSARealization(GTGAlgRealization):
                     #==========================================================
 
                     # if False:
-                    if True:
+                    if self._sett_psc_use_probs_flag:
                         mag_spec_probs = self._get_adj_mag_spec(
                             sim_ft_probs,
                             spec_crctn_cnst,
@@ -1452,11 +1454,12 @@ class IAAFTSARealization(GTGAlgRealization):
                     #==========================================================
 
                 # Marginals auto.
-                if self._sett_obj_any_ss_flag:
+                if self._sett_psc_use_margs_flag and self._sett_psc_ss_flag:
 
                     sim_ft_new = np.empty_like(sim_ft_margs)
 
-                    if i <= phs_spec_swap_iter:
+                    if (not self._sett_psc_phs_swap_flag):
+
                         if self._sett_prsrv_coeffs_set_flag:
                             sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
                                 phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
@@ -1497,11 +1500,12 @@ class IAAFTSARealization(GTGAlgRealization):
                 #==============================================================
 
                 # Ranks auto.
-                if self._sett_obj_any_ss_flag:
+                if self._sett_psc_use_probs_flag and self._sett_psc_ss_flag:
 
                     sim_ft_new = np.empty_like(sim_ft_probs)
 
-                    if i <= phs_spec_swap_iter:
+                    if (not self._sett_psc_phs_swap_flag):
+
                         if self._sett_prsrv_coeffs_set_flag:
                             sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
                                 phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
@@ -1539,9 +1543,9 @@ class IAAFTSARealization(GTGAlgRealization):
                 #==============================================================
 
                 # Marginals cross.
-                if self._sett_obj_any_ms_flag:
+                if self._sett_psc_use_margs_flag and self._sett_psc_ms_flag:
 
-                    if True:  # i <= phs_spec_swap_iter:
+                    if True:  # (not self._sett_psc_phs_swap_flag):
                         sim_phs = (
                             sim_phs_margs[:, [stn_ctr]] +
                             phs_spec_data - phs_spec_data[:, [stn_ctr]])
@@ -1583,9 +1587,9 @@ class IAAFTSARealization(GTGAlgRealization):
                 #==============================================================
 
                 # Ranks cross.
-                if self._sett_obj_any_ms_flag:
+                if self._sett_psc_use_probs_flag and self._sett_psc_ms_flag:
 
-                    if True:  # i <= phs_spec_swap_iter:
+                    if True:  # (not self._sett_psc_phs_swap_flag):
                         sim_phs = (
                             sim_phs_probs[:, [stn_ctr]] +
                             phs_spec_probs - phs_spec_probs[:, [stn_ctr]])
@@ -1646,7 +1650,7 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 probs = self._get_probs(data, True)
 
-                if ((i > phs_spec_swap_iter) and
+                if ((i > self._rs.shape[1]) and
                     (order_sdiff <= order_sdiffs_break_thresh)):
 
                     # Nothing changed.

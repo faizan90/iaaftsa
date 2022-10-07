@@ -258,6 +258,11 @@ class IAAFTSAPrepare(GTGPrepare):
 
                 print_el()
 
+        if self._sett_psc_ms_flag:
+            assert self._data_ref_shape[1] > 1, (
+                'For apply_ms_flag, their should be more than one column '
+                'in the input data!')
+
         GTGPrepare._GTGPrepare__verify(self)
         return
 
