@@ -527,7 +527,7 @@ def main():
                 weights, auto_wts_set_flag, wts_n_iters, obj_wts_exp)
 
         if np.any([min_period, max_period]):
-            iaaftsa_cls.set_preserve_coefficients_subset_settings(
+            iaaftsa_cls.set_preserve_phases_subset_settings(
                 min_period, max_period, keep_beyond_flag)
 
         if lags_nths_wts_flag:

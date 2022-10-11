@@ -293,7 +293,7 @@ class IAAFTSASettings(GTGSettings):
         if self._vb:
             print_sl()
 
-            print('Setting asymmetrize function settings...')
+            print('Setting asymmetrize function parameters...')
         #======================================================================
 
         # Type.
@@ -681,14 +681,14 @@ class IAAFTSASettings(GTGSettings):
         self._sett_asymm_set_flag = True
         return
 
-    def set_preserve_coefficients_subset_settings(
+    def set_preserve_phases_subset_settings(
             self, min_period, max_period, keep_beyond_flag):
 
         '''
-        Preserve a subset of coefficients in the simulated time series by
-        setting them equal to the reference.
+        Preserve a subset of coefficients phases in the simulated time
+        series by setting them equal to the reference.
 
-        Coefficients having periods less than min_period and greater
+        Phases having periods less than min_period and greater
         than max period (or vice versa) are always taken from the
         reference data. This is important for the cases such as the
         annual and seasonal cycles.
@@ -696,19 +696,19 @@ class IAAFTSASettings(GTGSettings):
         Parameters:
         ----------
         min_period : int or None
-            Coefficients having periods less (or greater) than min_period are
+            Phases having periods less (or greater) than min_period are
             overwritten in simulations with the corresponding ones
             from the reference. Should be greater than zero and less than
             max_period. An error is raised, later on, if min_period does
             not exist in the data.
         max_period : int or None
-            Coefficients having periods greater (or less) than max_period
-            are overwritten in simulations with the corresponding ones
+            Phases having periods greater (or less) than max_period
+            are replaced in simulations with the corresponding ones
             from the reference. Should be greater than zero and
             greater than min_period. An error is raised, later on, if
             max_period does not exist in the data.
         keep_beyond_flag : bool
-            Whether to keep coefficients beyond the min_period and max_period
+            Whether to keep phases beyond the min_period and max_period
             or within them. A value of True would keep the periods that
             have periods greater than max_period and less than min_period.
             A value of False would keep the periods whose periods are
@@ -722,7 +722,7 @@ class IAAFTSASettings(GTGSettings):
             print_sl()
 
             print(
-                'Setting preserve coefficients for IAAFTSA...\n')
+                'Setting preserve phases parameters for IAAFTSA...\n')
 
         if isinstance(min_period, int):
             assert min_period > 0, 'Invalid min_period!'
