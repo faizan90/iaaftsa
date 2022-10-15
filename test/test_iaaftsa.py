@@ -77,9 +77,9 @@ def main():
 #==============================================================================
     in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
 
-    sim_label = 'test_ppt_79'  # next:
+    sim_label = 'test_ppt_82__cols_rnd'  # next:
 
-    labels = ['P1162', 'P1197']  # , 'P1311', 'P1351']  # , 'cp']
+    labels = ['P1162', 'P1197', 'P1311']  # , 'P1351']  # , 'cp']
     # labels = ['P1162']
 
     time_fmt = '%Y-%m-%d'
@@ -195,13 +195,13 @@ def main():
     # plt_flag = False
 
     long_test_flag = True
-    # long_test_flag = False
+    long_test_flag = False
 
     auto_init_temperature_flag = True
-    # auto_init_temperature_flag = False
+    auto_init_temperature_flag = False
 
     wts_flag = True
-    # wts_flag = False
+    wts_flag = False
 
     n_reals = 8  # 16  # A multiple of n_cpus.
     outputs_dir = main_dir / sim_label
@@ -302,12 +302,16 @@ def main():
     swap_phss_spec_flag = True
     apply_ss_flag = True
     apply_ms_flag = True
+    cycle_cols_flag = True
+    rand_cols_flag = True
 
     # use_margs_flag = False
     # use_probs_flag = False
     swap_phss_spec_flag = False
     # apply_ss_flag = False
     # apply_ms_flag = False
+    cycle_cols_flag = False
+    # rand_cols_flag = False
 
     # weights = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.005], dtype=np.float64)
     # auto_wts_set_flag = False
@@ -561,7 +565,9 @@ def main():
             use_probs_flag,
             swap_phss_spec_flag,
             apply_ss_flag,
-            apply_ms_flag)
+            apply_ms_flag,
+            cycle_cols_flag,
+            rand_cols_flag)
 
         iaaftsa_cls.set_misc_settings(n_reals, outputs_dir, n_cpus)
 

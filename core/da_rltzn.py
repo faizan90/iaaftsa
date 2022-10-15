@@ -30,6 +30,9 @@ class OPTVARS:
         self.mxn_ratio_margss = np.array([], dtype=float)
         self.mxn_ratio_probss = np.array([], dtype=float)
 
+        # Random column index for phase difference.
+        self.phss_diff_col_idx = None
+
         # For asymmetrize.
         self.n_levelss = np.array([], dtype=np.uint32)
         self.max_shift_exps = np.array([], dtype=float)
@@ -61,6 +64,8 @@ class OPTVARS:
 
         opt_vars_cls_new.mxn_ratio_margss = (
             self.mxn_ratio_margss.copy())
+
+        opt_vars_cls_new.phss_diff_col_idx = self.phss_diff_col_idx
 
         opt_vars_cls_new.n_levelss = self.n_levelss.copy()
 
@@ -218,14 +223,16 @@ class IAAFTSARealization(GTGAlgRealization):
 
                 if c3:
                     print(
-                        f'Realization {rltzn_iter} finished {iter_ctr} '
+                        f'Realization {self._sett_misc_outs_dir.stem}_'
+                        f'{rltzn_iter} finished {iter_ctr} '
                         f'out of {self._sett_ann_max_iters} iterations '
                         f'on {asctime()}.\n')
 
                 else:
                     print(
-                        f'Realization {rltzn_iter} finished on '
-                        f'{asctime()} after {iter_ctr} iterations.')
+                        f'Realization {self._sett_misc_outs_dir.stem}_'
+                        f'{rltzn_iter} finished on {asctime()} after '
+                        f'{iter_ctr} iterations.')
 
                     print(
                         f'Total objective function value reduced '
@@ -991,6 +998,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
     def _init_iaaft_opt_vars(self, opt_vars_cls, set_mean_flag=False):
 
+        if self._sett_psc_rnd_col_flag:
+            opt_vars_cls.phss_diff_col_idx = np.random.randint(
+                0, self._data_ref_shape[1])
+
         if set_mean_flag:
             opt_vars_cls.mxn_ratio_probss = np.full(
                 self._data_ref_shape[1], 0.5, dtype=np.float)
@@ -1411,7 +1422,12 @@ class IAAFTSARealization(GTGAlgRealization):
 
         for j in range(readjust_ft_iters):
 
-            stn_ctr = 0
+            if self._sett_psc_rnd_col_flag:
+                stn_ctr = opt_vars_cls.phss_diff_col_idx
+
+            else:
+                stn_ctr = 0
+
             for i in range(iaaft_n_iters):
 
                 sim_ift = np.zeros_like(data)
@@ -1666,9 +1682,10 @@ class IAAFTSARealization(GTGAlgRealization):
                     # Nothing changed.
                     break
 
-                stn_ctr += 1
-                if stn_ctr == data.shape[1]:
-                    stn_ctr = 0
+                if self._sett_psc_cyc_col_flag:
+                    stn_ctr += 1
+                    if stn_ctr == data.shape[1]:
+                        stn_ctr = 0
                 #==============================================================
 
             if self._sett_asymm_set_flag and not plain_iaaft_flag:
@@ -1733,6 +1750,8 @@ class IAAFTSARealization(GTGAlgRealization):
         opt_vars_cls_old = OPTVARS()
 
         self._init_iaaft_opt_vars(opt_vars_cls_old, False)
+
+        self._rs.phss_diff_col_idx = opt_vars_cls_old.phss_diff_col_idx
 
         self._init_iaaft(opt_vars_cls_old)
 

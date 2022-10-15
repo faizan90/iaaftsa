@@ -67,6 +67,8 @@ class IAAFTSASettings(GTGSettings):
         self._sett_psc_phs_swap_flag = None
         self._sett_psc_ss_flag = None
         self._sett_psc_ms_flag = None
+        self._sett_psc_cyc_col_flag = None
+        self._sett_psc_rnd_col_flag = None
 
         # Auto phase lock detection.
         self._sett_prsrv_phss_auto_n_sims = None
@@ -827,10 +829,14 @@ class IAAFTSASettings(GTGSettings):
             use_probs_flag,
             swap_phss_spec_flag,
             apply_ss_flag,
-            apply_ms_flag):
+            apply_ms_flag,
+            cycle_cols_flag,
+            rand_cols_flag):
 
         '''
         PSC: Pearson and Spearman correlation.
+
+        Various ways to do IAAFT.
 
         Phase spectrum swapping for the simulated series.
         It is done for the single-site case only. Multisite worked better
@@ -838,12 +844,41 @@ class IAAFTSASettings(GTGSettings):
 
         Parameters:
         -----------
+        use_margs_flag : bool
+            Use the distribution of marginals while doing IAAFT.
+            If use_probs_flag is also set then they are mixed based on a
+            ratio that has to be optimized.
+        use_probs_flag : bool
+            Use the distribution of non-exeedence probabilities while
+            doing IAAFT. If use_margs_flag is also set then they are
+            mixed based on a ratio that has to be optimized.
         swap_phss_spec_flag : bool
             Whether to swap the marignal's phase spectrum with that of
             the rank's. This allows for the simulated series to have better
             pearson and spearman correlations. Without this, it is close
-            to impossible to have the spearman correaltion's of the
-            simulated series rise above that of the reference.
+            to impossible to have the spearman correlations of the
+            simulated series to rise above that of the reference.
+            apply_ss_flag should be set for this to work.
+        apply_ss_flag : bool
+            Use single-site IAAFT. Both apply_ss_flag and apply_ms_flag
+            can be set at the same time.
+        apply_ms_flag : bool
+            Use multi-site IAAFT. Both apply_ss_flag and apply_ms_flag
+            can be set at the same time.
+        cycle_cols_flag : bool
+            While running multi-site IAAFT, whether to cycle the columns
+            for getting the phase differences. If cycle_cols_flag is set then
+            apply_ms_flag must be set and rand_cols_flag must be unset. If
+            neither cycle_cols_flag nor rand_cols_flag is set then the first
+            column is taken for the phase difference.
+        rand_cols_flag : bool
+            While running multi-site IAAFT, whether to randomly choose
+            the column at each iteration that is chosen for the phase
+            differences. If rand_cols_flag is set then apply_ms_flag must be
+            set and cycle_cols_flag must be unset. If neither cycle_cols_flag
+            nor rand_cols_flag is set then the first column is taken for the
+            phase difference. The column to be used is chosen at the
+            begining of the simulation.
         '''
 
         if self._vb:
@@ -875,14 +910,41 @@ class IAAFTSASettings(GTGSettings):
         assert isinstance(apply_ms_flag, bool), (
             'apply_ms_flag not a boolean!')
 
+        # For now, phss swap applied to single site only as the multisite
+        # led to bad results.
+        if swap_phss_spec_flag:
+            assert apply_ss_flag, (
+                'apply_ss_flag must be set if swap_phss_spec_flag is set!')
+
         assert any([apply_ss_flag, apply_ms_flag]), (
             'At least one of the ss or ms flags should be True!')
+
+        assert isinstance(cycle_cols_flag, bool), (
+            'cycle_cols_flag not a boolean!')
+
+        if cycle_cols_flag:
+            assert apply_ms_flag, (
+                'If cycle_cols_flag is set then apply_ms_flag must be '
+                'set as well!')
+
+        assert isinstance(rand_cols_flag, bool), (
+            'rand_cols_flag not a boolean!')
+
+        if rand_cols_flag:
+            assert apply_ms_flag, (
+                'If rand_cols_flag is set then apply_ms_flag must be '
+                'set as well!')
+
+        assert not (cycle_cols_flag and rand_cols_flag) , (
+            'Only one of cycle_cols_flag and rand_cols_flag can be set!')
 
         self._sett_psc_use_margs_flag = use_margs_flag
         self._sett_psc_use_probs_flag = use_margs_flag
         self._sett_psc_phs_swap_flag = swap_phss_spec_flag
         self._sett_psc_ss_flag = apply_ss_flag
         self._sett_psc_ms_flag = apply_ms_flag
+        self._sett_psc_cyc_col_flag = cycle_cols_flag
+        self._sett_psc_rnd_col_flag = rand_cols_flag
 
         if self._vb:
 
@@ -905,6 +967,14 @@ class IAAFTSASettings(GTGSettings):
             print(
                 'Apply multi-site IAAFT flag:',
                 self._sett_psc_ms_flag)
+
+            print(
+                'Cycle columns flag:',
+                self._sett_psc_cyc_col_flag)
+
+            print(
+                'Random columns flag:',
+                self._sett_psc_rnd_col_flag)
 
             print_el()
 

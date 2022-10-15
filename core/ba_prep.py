@@ -40,6 +40,9 @@ class IAAFTSAPrepareRltznSim(GTGPrepareRltznSim):
         self.mxn_ratio_margss = None
         self.mxn_ratio_probss = None
 
+        # Use when self._sett_psc_rnd_col_flag is set.
+        self.phss_diff_col_idx = None
+
         # For asymmetrize.
         self.n_levelss = None
         self.max_shift_exps = None
@@ -323,10 +326,13 @@ class IAAFTSAPrepare(GTGPrepare):
 
                 print_el()
 
-        if self._sett_psc_ms_flag:
+        if (self._sett_psc_ms_flag or
+            self._sett_psc_cyc_col_flag and
+            self._sett_psc_rnd_col_flag):
+
             assert self._data_ref_shape[1] > 1, (
-                'For apply_ms_flag, their should be more than one column '
-                'in the input data!')
+                'For apply_ms_flag or cycle_cols_flag or rand_cols_flag, '
+                'their should be more than one column in the input data!')
 
         GTGPrepare._GTGPrepare__verify(self)
         return

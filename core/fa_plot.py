@@ -13,6 +13,7 @@ from multiprocessing import Pool
 import h5py
 import numpy as np
 import matplotlib.pyplot as plt; plt.ioff()
+from matplotlib.ticker import MaxNLocator
 
 from gnrctsgenr import (
     get_mpl_prms,
@@ -47,6 +48,142 @@ class IAAFTSAPlot(
 
         self._plt_sett_phs_red_rates = self._default_line_sett
         self._plt_sett_idxs = self._default_line_sett
+        return
+
+    def _plot_prsrv_phss(self, var_type):
+
+        assert var_type in ('margs', 'ranks')
+
+        beg_tm = default_timer()
+
+        h5_hdl = h5py.File(self._plt_in_h5_file, mode='r', driver=None)
+
+        plt_sett = self._plt_sett_ft_corrs
+
+        new_mpl_prms = plt_sett.prms_dict
+
+        old_mpl_prms = get_mpl_prms(new_mpl_prms.keys())
+
+        set_mpl_prms(new_mpl_prms)
+
+        data_labels = tuple(h5_hdl['data_ref'].attrs['data_ref_labels'])
+
+        n_data_labels = h5_hdl['data_ref'].attrs['data_ref_n_labels']
+
+        loop_prod = np.arange(n_data_labels)
+
+        # cumm ft corrs, sim_sim
+        plt.figure()
+
+        for data_lab_idx in loop_prod:
+
+            ref_grp = h5_hdl[f'data_ref_rltzn']
+
+            ref_idxs = ref_grp[
+                f'prsrv_phss_idxs_{var_type}'][1:, data_lab_idx].astype(int)
+
+            ref_periods = ((ref_idxs.size * 2) + 2) / (
+                np.arange(1, ref_idxs.size + 1))
+
+            plt.semilogx(
+                ref_periods,
+                ref_idxs,
+                alpha=plt_sett.alpha_2,
+                color=plt_sett.lc_2,
+                lw=plt_sett.lw_2)
+
+            plt.grid()
+
+            plt.gca().set_axisbelow(True)
+
+            plt.xlabel('Period (steps)')
+
+            plt.yticks([0, 1], ['Not preserved', 'preserved'])
+
+            plt.ylim(-0.05, +1.05)
+
+            plt.xlim(plt.xlim()[::-1])
+
+            out_name = (
+                f'ss__prsrv_phss_{var_type}_'
+                f'{data_labels[data_lab_idx]}.png')
+
+            plt.savefig(str(self._ss_dir / out_name), bbox_inches='tight')
+
+            plt.clf()
+
+        plt.close()
+
+        h5_hdl.close()
+
+        set_mpl_prms(old_mpl_prms)
+
+        end_tm = default_timer()
+
+        if self._vb:
+            print(
+                f'Plotting preserved phases for {var_type} '
+                f'took {end_tm - beg_tm:0.2f} seconds.')
+
+        return
+
+    def _rnd_cols_hist(self):
+
+        beg_tm = default_timer()
+
+        h5_hdl = h5py.File(self._plt_in_h5_file, mode='r', driver=None)
+
+        plt_sett = self._plt_sett_tmrs
+
+        new_mpl_prms = plt_sett.prms_dict
+
+        old_mpl_prms = get_mpl_prms(new_mpl_prms.keys())
+
+        set_mpl_prms(new_mpl_prms)
+
+        sim_grp_main = h5_hdl['data_sim_rltzns']
+
+        rand_col_idxs = []
+
+        for rltzn_lab in sim_grp_main:
+            rand_col_idx = int(
+                sim_grp_main[f'{rltzn_lab}'].attrs['phss_diff_col_idx'])
+
+            rand_col_idxs.append(rand_col_idx)
+
+        rand_col_idxs_unq, rand_col_idxs_cts = np.unique(
+            rand_col_idxs, return_counts=True)
+
+        plt.bar(
+            rand_col_idxs_unq,
+            rand_col_idxs_cts,
+            alpha=plt_sett.alpha_1,
+            color=plt_sett.lc_1)
+
+        plt.xlabel('Column index')
+        plt.ylabel('Frequency')
+
+        plt.xticks(rand_col_idxs_unq, rand_col_idxs_unq)
+
+        plt.gca().yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        plt.savefig(
+            str(self._ss_dir / f'ss__rand_col_idxs.png'),
+            bbox_inches='tight')
+
+        plt.close()
+
+        h5_hdl.close()
+
+        set_mpl_prms(old_mpl_prms)
+
+        end_tm = default_timer()
+
+        if self._vb:
+            print(
+                f'Plotting random columns histogram '
+                f'took {end_tm - beg_tm:0.2f} seconds.')
+
         return
 
     def _cmpr_iaafted_and_final_sers(self):
@@ -615,9 +752,34 @@ class IAAFTSAPlot(
         self._fill_ss_args_gnrc(ftns_args)
 
         if self._plt_ss_flag:
+
+            h5_hdl = h5py.File(self._plt_in_h5_file, mode='r', driver=None)
+
+            rand_cols_flag = bool(h5_hdl['flags'].attrs[
+                'sett_psc_rnd_col_flag'])
+
+            prsrv_coeffs_set_flag = bool(h5_hdl['flags'].attrs[
+                'sett_prsrv_coeffs_set_flag'])
+
+            prsrv_phss_auto_set_flag = bool(h5_hdl['flags'].attrs[
+                'sett_prsrv_phss_auto_set_flag'])
+
+            h5_hdl.close()
+
             ftns_args.extend([
                 (self._cmpr_iaafted_and_final_sers, []),
                 ])
+
+            if rand_cols_flag:
+                ftns_args.extend([
+                    (self._rnd_cols_hist, []),
+                    ])
+
+            if prsrv_coeffs_set_flag or prsrv_phss_auto_set_flag:
+                ftns_args.extend([
+                    (self._plot_prsrv_phss, ['margs']),
+                    (self._plot_prsrv_phss, ['ranks']),
+                    ])
 
         self._fill_ms_args_gnrc(ftns_args)
 
