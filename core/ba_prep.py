@@ -21,8 +21,8 @@ class IAAFTSAPrepareRltznRef(GTGPrepareRltznRef):
 
         GTGPrepareRltznRef.__init__(self)
 
-        self.prsrv_coeffs_idxs = None
-        self.not_prsrv_coeffs_idxs = None
+        self.prsrv_phss_idxs_margs = None
+        self.prsrv_phss_idxs_ranks = None
         return
 
 
@@ -110,50 +110,115 @@ class IAAFTSAPrepare(GTGPrepare):
         GTGPrepare.__init__(self)
         return
 
-    def _set_prsrv_coeffs_idxs(self):
+    def _get_lock_phss_idxs(self, mags, ref_sers_srtd):
 
-        periods = self._rr.probs.shape[0] / (
-            np.arange(1, self._rr.ft.shape[0] - 1))
+        max_lim_idx = int(
+            (1.0 - self._sett_prsrv_phss_auto_alpha) *
+            self._sett_prsrv_phss_auto_n_sims)
 
-        self._rr.prsrv_coeffs_idxs = np.zeros(
-            self._rr.ft.shape[0] - 2, dtype=bool)
+        assert 0 <= max_lim_idx <= self._sett_prsrv_phss_auto_n_sims, (
+            max_lim_idx, self._sett_prsrv_phss_auto_n_sims)
 
-        if self._sett_prsrv_coeffs_min_prd is not None:
-            assert periods.min() <= self._sett_prsrv_coeffs_min_prd, (
-                'Minimum period does not exist in data!')
+        min_lim_idx = int(
+            self._sett_prsrv_phss_auto_alpha *
+            self._sett_prsrv_phss_auto_n_sims)
 
-            assert periods.max() > self._sett_prsrv_coeffs_min_prd, (
-                'Data maximum period greater than or equal to min_period!')
+        assert 0 <= min_lim_idx <= self._sett_prsrv_phss_auto_n_sims, (
+            min_lim_idx, self._sett_prsrv_phss_auto_n_sims)
 
-        if self._sett_prsrv_coeffs_max_prd is not None:
-            assert periods.max() >= self._sett_prsrv_coeffs_max_prd, (
-                'Maximum period does not exist in data!')
+        assert max_lim_idx >= min_lim_idx, (min_lim_idx, max_lim_idx)
 
-        if self._sett_prsrv_coeffs_beyond_flag:
+        # In the case that self._sett_prsrv_phss_auto_alpha is zero.
+        if max_lim_idx == self._sett_prsrv_phss_auto_n_sims:
+            max_lim_idx -= 1
+
+        lock_phss_idxs = np.zeros(mags.shape, dtype=bool, order='f')
+
+        sim_magss = np.empty(
+            (self._sett_prsrv_phss_auto_n_sims, mags.shape[0]))
+
+        for i in range(mags.shape[1]):
+            for j in range(self._sett_prsrv_phss_auto_n_sims):
+
+                sim_ser = ref_sers_srtd[:, i].copy()
+
+                np.random.shuffle(sim_ser)
+
+                sim_mags = np.abs(np.fft.rfft(sim_ser))
+
+                sim_magss[j,:] = sim_mags
+
+            sim_magss.sort(axis=0)
+
+            within_lim_idxs = (
+                (sim_magss[min_lim_idx,:] <= mags[:, i]) &
+                ((sim_magss[max_lim_idx,:] >= mags[:, i])))
+
+            lock_phss_idxs[:, i] = ~within_lim_idxs
+
+        lock_phss_idxs[0,:] = True
+        lock_phss_idxs[-1,:] = True
+        return lock_phss_idxs
+
+    def _set_prsrv_phss_idxs(self):
+        if self._sett_prsrv_phss_auto_set_flag:
+            self._rr.prsrv_phss_idxs_margs = self._get_lock_phss_idxs(
+                self._rr.data_ft_coeffs_mags,
+                self._data_ref_rltzn_srtd)
+
+            self._rr.prsrv_phss_idxs_ranks = self._get_lock_phss_idxs(
+                self._rr.probs_ft_coeffs_mags,
+                self._rr.probs_srtd)
+
+        else:
+            periods = self._rr.probs.shape[0] / (
+                np.arange(1, self._rr.ft.shape[0] - 1))
+
+            prsrv_phss_idxs = np.zeros(
+                self._rr.ft.shape[0] - 2, dtype=bool)
+
             if self._sett_prsrv_coeffs_min_prd is not None:
-                self._rr.prsrv_coeffs_idxs[
-                    periods < self._sett_prsrv_coeffs_min_prd] = True
+                assert periods.min() <= self._sett_prsrv_coeffs_min_prd, (
+                    'Minimum period does not exist in data!')
+
+                assert periods.max() > self._sett_prsrv_coeffs_min_prd, (
+                    'Data maximum period greater than or equal to min_period!')
 
             if self._sett_prsrv_coeffs_max_prd is not None:
-                self._rr.prsrv_coeffs_idxs[
-                    periods > self._sett_prsrv_coeffs_max_prd] = True
+                assert periods.max() >= self._sett_prsrv_coeffs_max_prd, (
+                    'Maximum period does not exist in data!')
 
-        if self._sett_prsrv_coeffs_set_flag:
-            assert self._rr.prsrv_coeffs_idxs.sum(), (
-                'Incorrect min_period or max_period, '
-                'no coefficients selected for IAAFTSA!')
+            if self._sett_prsrv_coeffs_beyond_flag:
+                if self._sett_prsrv_coeffs_min_prd is not None:
+                    prsrv_phss_idxs[
+                        periods < self._sett_prsrv_coeffs_min_prd] = True
 
-        self._rr.prsrv_coeffs_idxs = np.concatenate(
-            ([True], self._rr.prsrv_coeffs_idxs, [True]))
+                if self._sett_prsrv_coeffs_max_prd is not None:
+                    prsrv_phss_idxs[
+                        periods > self._sett_prsrv_coeffs_max_prd] = True
 
-        self._rr.not_prsrv_coeffs_idxs = ~self._rr.prsrv_coeffs_idxs
+            if self._sett_prsrv_coeffs_set_flag:
+                assert prsrv_phss_idxs.sum(), (
+                    'Incorrect min_period or max_period, '
+                    'no coefficients selected for IAAFTSA!')
+
+            prsrv_phss_idxs = np.concatenate(
+                ([True], prsrv_phss_idxs, [True])).reshape(-1, 1)
+
+            prsrv_phss_idxs = np.concatenate(
+                [prsrv_phss_idxs.copy(order='f')] * self._data_ref_shape[1],
+                axis=1)
+
+            self.prsrv_phss_idxs_margs = prsrv_phss_idxs.copy(order='f')
+            self.prsrv_phss_idxs_ranks = prsrv_phss_idxs.copy(order='f')
+
         return
 
     def _gen_ref_aux_data(self):
 
         self._gen_ref_aux_data_gnrc()
 
-        self._set_prsrv_coeffs_idxs()
+        self._set_prsrv_phss_idxs()
 
         self._prep_ref_aux_flag = True
         return

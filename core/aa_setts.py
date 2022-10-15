@@ -68,11 +68,16 @@ class IAAFTSASettings(GTGSettings):
         self._sett_psc_ss_flag = None
         self._sett_psc_ms_flag = None
 
+        # Auto phase lock detection.
+        self._sett_prsrv_phss_auto_n_sims = None
+        self._sett_prsrv_phss_auto_alpha = None
+
         # Flags.
         self._sett_ann_iaaftsa_sa_set_flag = False
         self._sett_asymm_set_flag = False
         self._sett_prsrv_coeffs_set_flag = False
         self._sett_psc_set_flag = False
+        self._sett_prsrv_phss_auto_set_flag = False
         self._sett_iaaftsa_sett_verify_flag = False
         return
 
@@ -770,6 +775,52 @@ class IAAFTSASettings(GTGSettings):
         self._sett_prsrv_coeffs_set_flag = True
         return
 
+    def set_auto_preserve_settings(self, n_sims, alpha):
+
+        '''
+        Preserve important phases automatically.
+
+        For now, it based on the fact that if the magnitude of a given
+        frequency if greater than that of the same series randomly
+        schuffled then its phase is important enough to be preserved.
+
+        Ideally, it should be something like phases that stay the same
+        from one year to another or atleast within a tolerance.
+
+        Parameters
+        ----------
+        n_sims : int
+            The number of simulations used to check if the measured magnitude
+            is within a given limit. Has to be >= 2.
+        alpha : float
+            The limit on the CDF from one side. If a given magnitude is
+            above this limit on any side then its phase is preserved.
+        '''
+
+        if self._vb:
+            print_sl()
+
+            print(
+                'Setting auto phase lock parameters for IAAFTSA...\n')
+
+        assert isinstance(n_sims, int)
+        assert n_sims >= 2
+
+        assert isinstance(alpha, float)
+        assert 0.0 <= alpha < 1.0
+
+        self._sett_prsrv_phss_auto_n_sims = n_sims
+        self._sett_prsrv_phss_auto_alpha = alpha
+
+        if self._vb:
+            print('Number of simulations:', self._sett_prsrv_phss_auto_n_sims)
+            print('Alpha:', self._sett_prsrv_phss_auto_alpha)
+
+            print_el()
+
+        self._sett_prsrv_phss_auto_set_flag = True
+        return
+
     def set_iaaft_psc_settings(
             self,
             use_margs_flag,
@@ -867,6 +918,13 @@ class IAAFTSASettings(GTGSettings):
 
         assert self._sett_psc_set_flag, (
             'Call set_iaaft_psc_settings first!')
+
+        if self._sett_prsrv_phss_auto_set_flag:
+
+            self._sett_prsrv_coeffs_min_prd = None
+            self._sett_prsrv_coeffs_max_prd = None
+            self._sett_prsrv_coeffs_beyond_flag = None
+            self._sett_prsrv_coeffs_set_flag = False
 
         GTGSettings._GTGSettings__verify(self)
 

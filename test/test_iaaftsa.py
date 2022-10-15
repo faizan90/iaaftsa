@@ -77,15 +77,15 @@ def main():
 #==============================================================================
     in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
 
-    sim_label = 'test_ppt_70__phss_swap_ms'  # next:
+    sim_label = 'test_ppt_79'  # next:
 
-    labels = ['P1162', 'P1197', 'P1311', 'P1351']  # , 'cp']
+    labels = ['P1162', 'P1197']  # , 'P1311', 'P1351']  # , 'cp']
     # labels = ['P1162']
 
     time_fmt = '%Y-%m-%d'
 
     beg_time = '1991-01-01'
-    end_time = '1999-12-31'
+    end_time = '1995-12-31'
 
 #==============================================================================
 #    Hourly ppt.
@@ -132,12 +132,12 @@ def main():
 #==============================================================================
 #    Daily discharge.
 #==============================================================================
-    # # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
-    #
+    # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
+
     # in_file_path = Path(
     #     r'neckar_q_data_combined_20180713_10cps.csv')
     #
-    # sim_label = 'test_maiden_489'  # next:
+    # sim_label = 'test_maiden_494'  # next:
     #
     # labels = ['420']  # , '3421']  # , 'cp']  #, '427'
     #
@@ -236,7 +236,7 @@ def main():
 
     scorr_flag = False
     asymm_type_1_flag = False
-    # asymm_type_2_flag = False
+    asymm_type_2_flag = False
     ecop_dens_flag = False
     ecop_etpy_flag = False
     nth_order_diffs_flag = False
@@ -246,7 +246,7 @@ def main():
     asymm_type_2_ms_flag = False
     ecop_dens_ms_flag = False
     # match_data_ft_flag = False
-    match_probs_ft_flag = False
+    # match_probs_ft_flag = False
     asymm_type_1_ft_flag = False
     asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
@@ -256,8 +256,8 @@ def main():
     # etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
-    # match_data_ms_ft_flag = False
-    # match_probs_ms_ft_flag = False
+    match_data_ms_ft_flag = False
+    match_probs_ms_ft_flag = False
     # match_data_ms_pair_ft_flag = False
     # match_probs_ms_pair_ft_flag = False
 
@@ -277,7 +277,7 @@ def main():
 
     mixing_ratio_reduction_rate_type = 3
     mixing_ratio_reduction_rate_min = 1e-4
-    iaaft_n_iterations_max = 10  # Per stn. This can be an optimization parameter.
+    iaaft_n_iterations_max = 5  # Per stn. This can be an optimization parameter.
 
     use_asymmetrize_function_flag = True
     use_asymmetrize_function_flag = False
@@ -305,7 +305,7 @@ def main():
 
     # use_margs_flag = False
     # use_probs_flag = False
-    # swap_phss_spec_flag = False
+    swap_phss_spec_flag = False
     # apply_ss_flag = False
     # apply_ms_flag = False
 
@@ -319,20 +319,25 @@ def main():
     wts_n_iters = 1000
     obj_wts_exp = 0.65
 
+    auto_phss_lock_flag = True
+    # auto_phss_lock_flag = False
+    n_phss_lock_sims = 10000
+    phss_lock_alpha = 0.001  # 2.0 / n_phss_lock_sims
+
     min_period = None
-    max_period = 90
+    max_period = None
     keep_beyond_flag = True
     # keep_beyond_flag = False
 
     lags_nths_wts_flag = True
-    # lags_nths_wts_flag = False
+    lags_nths_wts_flag = False
     lags_nths_exp = 2.0
     lags_nths_n_iters = 1000
     lags_nths_cumm_wts_contrib = 0.9999
     lags_nths_n_thresh = max(lag_steps.size, nth_ords.size)
 
     label_wts_flag = True
-    label_wts_flag = False
+    # label_wts_flag = False
     label_exp = 1.0
     label_n_iters = 1000
 
@@ -372,9 +377,9 @@ def main():
 
     if long_test_flag:
         initial_annealing_temperature = 1e2
-        temperature_reduction_ratio = 0.55
+        temperature_reduction_ratio = 0.95
         update_at_every_iteration_no = 100
-        maximum_iterations = int(5e3)
+        maximum_iterations = int(5e4)
         maximum_without_change_iterations = 20000
         objective_tolerance = 1e-3
         objective_tolerance_iterations = update_at_every_iteration_no * 5
@@ -526,7 +531,11 @@ def main():
             iaaftsa_cls.set_objective_weights_settings(
                 weights, auto_wts_set_flag, wts_n_iters, obj_wts_exp)
 
-        if np.any([min_period, max_period]):
+        if auto_phss_lock_flag:
+            iaaftsa_cls.set_auto_preserve_settings(
+                n_phss_lock_sims, phss_lock_alpha)
+
+        elif np.any([min_period, max_period]):
             iaaftsa_cls.set_preserve_phases_subset_settings(
                 min_period, max_period, keep_beyond_flag)
 

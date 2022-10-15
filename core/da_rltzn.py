@@ -1405,6 +1405,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
         assert readjust_ft_iters >= 1, readjust_ft_iters
 
+        lock_phss_flag = (
+            self._sett_prsrv_phss_auto_set_flag or
+            self._sett_prsrv_coeffs_set_flag)
+
         for j in range(readjust_ft_iters):
 
             stn_ctr = 0
@@ -1460,9 +1464,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
                     if (not self._sett_psc_phs_swap_flag):
 
-                        if self._sett_prsrv_coeffs_set_flag:
-                            sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
-                                phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
+                        if lock_phss_flag:
+                            for k in range(self._data_ref_shape[1]):
+                                sim_phs_margs[self._rr.prsrv_phss_idxs_margs[:, k], k] = (
+                                    phs_spec_data[self._rr.prsrv_phss_idxs_margs[:, k], k])
 
                         sim_ft_new.real[:] = (
                             np.cos(sim_phs_margs) * mag_spec_data)
@@ -1471,9 +1476,10 @@ class IAAFTSARealization(GTGAlgRealization):
                             np.sin(sim_phs_margs) * mag_spec_data)
 
                     else:
-                        if self._sett_prsrv_coeffs_set_flag:
-                            sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
-                                phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
+                        if lock_phss_flag:
+                            for k in range(self._data_ref_shape[1]):
+                                sim_phs_probs[self._rr.prsrv_phss_idxs_margs[:, k], k] = (
+                                    phs_spec_data[self._rr.prsrv_phss_idxs_margs[:, k], k])
 
                         sim_ft_new.real[:] = (
                             np.cos(sim_phs_probs) * mag_spec_data)
@@ -1506,9 +1512,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
                     if (not self._sett_psc_phs_swap_flag):
 
-                        if self._sett_prsrv_coeffs_set_flag:
-                            sim_phs_probs[self._rr.prsrv_coeffs_idxs,:] = (
-                                phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
+                        if lock_phss_flag:
+                            for k in range(self._data_ref_shape[1]):
+                                sim_phs_probs[self._rr.prsrv_phss_idxs_ranks[:, k], k] = (
+                                    phs_spec_probs[self._rr.prsrv_phss_idxs_ranks[:, k], k])
 
                         sim_ft_new.real[:] = (
                             np.cos(sim_phs_probs) * mag_spec_probs)
@@ -1517,9 +1524,10 @@ class IAAFTSARealization(GTGAlgRealization):
                             np.sin(sim_phs_probs) * mag_spec_probs)
 
                     else:
-                        if self._sett_prsrv_coeffs_set_flag:
-                            sim_phs_margs[self._rr.prsrv_coeffs_idxs,:] = (
-                                phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
+                        if lock_phss_flag:
+                            for k in range(self._data_ref_shape[1]):
+                                sim_phs_margs[self._rr.prsrv_phss_idxs_ranks[:, k], k] = (
+                                    phs_spec_probs[self._rr.prsrv_phss_idxs_ranks[:, k], k])
 
                         sim_ft_new.real[:] = (
                             np.cos(sim_phs_margs) * mag_spec_probs)
@@ -1559,9 +1567,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
                         sim_phs[0,:] = phs_spec_probs[0,:]
 
-                    if self._sett_prsrv_coeffs_set_flag:
-                        sim_phs[self._rr.prsrv_coeffs_idxs,:] = (
-                            phs_spec_data[self._rr.prsrv_coeffs_idxs,:])
+                    if lock_phss_flag:
+                        for k in range(self._data_ref_shape[1]):
+                            sim_phs[self._rr.prsrv_phss_idxs_margs[:, k], k] = (
+                                phs_spec_data[self._rr.prsrv_phss_idxs_margs[:, k], k])
 
                     sim_ft_new = np.empty_like(sim_ft_margs)
 
@@ -1603,9 +1612,10 @@ class IAAFTSARealization(GTGAlgRealization):
 
                         sim_phs[0,:] = phs_spec_data[0,:]
 
-                    if self._sett_prsrv_coeffs_set_flag:
-                        sim_phs[self._rr.prsrv_coeffs_idxs,:] = (
-                            phs_spec_probs[self._rr.prsrv_coeffs_idxs,:])
+                    if lock_phss_flag:
+                        for k in range(self._data_ref_shape[1]):
+                            sim_phs[self._rr.prsrv_phss_idxs_ranks[:, k], k] = (
+                                phs_spec_probs[self._rr.prsrv_phss_idxs_ranks[:, k], k])
 
                     sim_ft_new = np.empty_like(sim_ft_probs)
 
