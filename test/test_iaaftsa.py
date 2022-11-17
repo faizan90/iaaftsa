@@ -75,17 +75,17 @@ def main():
 #==============================================================================
 #    Daily ppt.
 #==============================================================================
-    in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
-
-    sim_label = 'test_ppt_82__cols_rnd'  # next:
-
-    labels = ['P1162', 'P1197', 'P1311']  # , 'P1351']  # , 'cp']
-    # labels = ['P1162']
-
-    time_fmt = '%Y-%m-%d'
-
-    beg_time = '1991-01-01'
-    end_time = '1995-12-31'
+    # in_file_path = Path(r'precipitation_bw_1961_2015_10cps.csv')
+    #
+    # sim_label = 'test_ppt_82__cols_cyc_phs_swap'  # next:
+    #
+    # labels = ['P1162', 'P1197', 'P1311']  # , 'P1351']  # , 'cp']
+    # # labels = ['P1162']
+    #
+    # time_fmt = '%Y-%m-%d'
+    #
+    # beg_time = '1991-01-01'
+    # end_time = '1995-12-31'
 
 #==============================================================================
 #    Hourly ppt.
@@ -134,17 +134,17 @@ def main():
 #==============================================================================
     # in_file_path = Path(r'neckar_q_data_combined_20180713.csv')
 
-    # in_file_path = Path(
-    #     r'neckar_q_data_combined_20180713_10cps.csv')
-    #
-    # sim_label = 'test_maiden_494'  # next:
-    #
-    # labels = ['420']  # , '3421']  # , 'cp']  #, '427'
-    #
-    # time_fmt = '%Y-%m-%d'
-    #
-    # beg_time = '1963-07-01'
-    # end_time = '1968-07-31'
+    in_file_path = Path(
+        r'neckar_q_data_combined_20180713_10cps.csv')
+
+    sim_label = 'test_maiden_495_with_phss_swap'  # next:
+
+    labels = ['420', '3421', '3470']  # , 'cp']  #, '427'
+
+    time_fmt = '%Y-%m-%d'
+
+    beg_time = '1963-07-01'
+    end_time = '1968-07-31'
 
 #==============================================================================
 
@@ -195,13 +195,13 @@ def main():
     # plt_flag = False
 
     long_test_flag = True
-    long_test_flag = False
+    # long_test_flag = False
 
     auto_init_temperature_flag = True
-    auto_init_temperature_flag = False
+    # auto_init_temperature_flag = False
 
     wts_flag = True
-    wts_flag = False
+    # wts_flag = False
 
     n_reals = 8  # 16  # A multiple of n_cpus.
     outputs_dir = main_dir / sim_label
@@ -250,14 +250,14 @@ def main():
     asymm_type_1_ft_flag = False
     asymm_type_2_ft_flag = False
     nth_order_ft_flag = False
-    # asymm_type_1_ms_ft_flag = False
-    # asymm_type_2_ms_ft_flag = False
+    asymm_type_1_ms_ft_flag = False
+    asymm_type_2_ms_ft_flag = False
     etpy_ft_flag = False
-    # etpy_ms_ft_flag = False
+    etpy_ms_ft_flag = False
     scorr_ms_flag = False
     etpy_ms_flag = False
-    match_data_ms_ft_flag = False
-    match_probs_ms_ft_flag = False
+    # match_data_ms_ft_flag = False
+    # match_probs_ms_ft_flag = False
     # match_data_ms_pair_ft_flag = False
     # match_probs_ms_pair_ft_flag = False
 
@@ -307,11 +307,11 @@ def main():
 
     # use_margs_flag = False
     # use_probs_flag = False
-    swap_phss_spec_flag = False
+    # swap_phss_spec_flag = False
     # apply_ss_flag = False
     # apply_ms_flag = False
-    cycle_cols_flag = False
-    # rand_cols_flag = False
+    # cycle_cols_flag = False
+    rand_cols_flag = False
 
     # weights = np.array([1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.005], dtype=np.float64)
     # auto_wts_set_flag = False

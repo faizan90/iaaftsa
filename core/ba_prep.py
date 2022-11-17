@@ -115,6 +115,18 @@ class IAAFTSAPrepare(GTGPrepare):
 
     def _get_lock_phss_idxs(self, mags, ref_sers_srtd):
 
+        '''
+        TEST: We are aiming for a flat power spectrum here.
+        This can be acheived by taking the mean of power and then
+        distributing it equally to all frequencies. If this is similar
+        to the case what is done in the for-loop, then the for-loop
+        is not needed.
+
+        I found out that Nakamura et al. 2006 talk about the limit
+        below which frequencies can be locked. But they define a limit.
+        Here, each frequency is tested.
+        '''
+
         max_lim_idx = int(
             (1.0 - self._sett_prsrv_phss_auto_alpha) *
             self._sett_prsrv_phss_auto_n_sims)
@@ -164,21 +176,38 @@ class IAAFTSAPrepare(GTGPrepare):
         return lock_phss_idxs
 
     def _set_prsrv_phss_idxs(self):
-        if self._sett_prsrv_phss_auto_set_flag:
-            self._rr.prsrv_phss_idxs_margs = self._get_lock_phss_idxs(
-                self._rr.data_ft_coeffs_mags,
-                self._data_ref_rltzn_srtd)
 
-            self._rr.prsrv_phss_idxs_ranks = self._get_lock_phss_idxs(
-                self._rr.probs_ft_coeffs_mags,
-                self._rr.probs_srtd)
+        if self._sett_prsrv_phss_auto_set_flag:
+
+            if self._vb:
+
+                print_sl()
+
+                print('Computing phases to be locked...')
+
+            assert any([
+                self._sett_psc_use_margs_flag,
+                self._sett_psc_use_probs_flag])
+
+            if self._sett_psc_use_margs_flag:
+                self._rr.prsrv_phss_idxs_margs = self._get_lock_phss_idxs(
+                    self._rr.data_ft_coeffs_mags,
+                    self._data_ref_rltzn_srtd)
+
+            if self._sett_psc_use_probs_flag:
+                self._rr.prsrv_phss_idxs_ranks = self._get_lock_phss_idxs(
+                    self._rr.probs_ft_coeffs_mags,
+                    self._rr.probs_srtd)
+
+            if self._vb:
+
+                print('Done.')
+
+                print_el()
 
         else:
             periods = self._rr.probs.shape[0] / (
                 np.arange(1, self._rr.ft.shape[0] - 1))
-
-            prsrv_phss_idxs = np.zeros(
-                self._rr.ft.shape[0] - 2, dtype=bool)
 
             if self._sett_prsrv_coeffs_min_prd is not None:
                 assert periods.min() <= self._sett_prsrv_coeffs_min_prd, (
@@ -192,6 +221,10 @@ class IAAFTSAPrepare(GTGPrepare):
                     'Maximum period does not exist in data!')
 
             if self._sett_prsrv_coeffs_beyond_flag:
+
+                prsrv_phss_idxs = np.zeros(
+                    self._rr.ft.shape[0] - 2, dtype=bool)
+
                 if self._sett_prsrv_coeffs_min_prd is not None:
                     prsrv_phss_idxs[
                         periods < self._sett_prsrv_coeffs_min_prd] = True
@@ -199,6 +232,18 @@ class IAAFTSAPrepare(GTGPrepare):
                 if self._sett_prsrv_coeffs_max_prd is not None:
                     prsrv_phss_idxs[
                         periods > self._sett_prsrv_coeffs_max_prd] = True
+
+            else:
+                prsrv_phss_idxs = np.ones(
+                    self._rr.ft.shape[0] - 2, dtype=bool)
+
+                if self._sett_prsrv_coeffs_min_prd is not None:
+                    prsrv_phss_idxs[
+                        periods < self._sett_prsrv_coeffs_min_prd] = False
+
+                if self._sett_prsrv_coeffs_max_prd is not None:
+                    prsrv_phss_idxs[
+                        periods > self._sett_prsrv_coeffs_max_prd] = False
 
             if self._sett_prsrv_coeffs_set_flag:
                 assert prsrv_phss_idxs.sum(), (
@@ -212,8 +257,8 @@ class IAAFTSAPrepare(GTGPrepare):
                 [prsrv_phss_idxs.copy(order='f')] * self._data_ref_shape[1],
                 axis=1)
 
-            self.prsrv_phss_idxs_margs = prsrv_phss_idxs.copy(order='f')
-            self.prsrv_phss_idxs_ranks = prsrv_phss_idxs.copy(order='f')
+            self._rr.prsrv_phss_idxs_margs = prsrv_phss_idxs.copy(order='f')
+            self._rr.prsrv_phss_idxs_ranks = prsrv_phss_idxs.copy(order='f')
 
         return
 
@@ -221,7 +266,8 @@ class IAAFTSAPrepare(GTGPrepare):
 
         self._gen_ref_aux_data_gnrc()
 
-        self._set_prsrv_phss_idxs()
+        if not self._alg_done_opt_flag:
+            self._set_prsrv_phss_idxs()
 
         self._prep_ref_aux_flag = True
         return

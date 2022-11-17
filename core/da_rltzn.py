@@ -1420,6 +1420,8 @@ class IAAFTSARealization(GTGAlgRealization):
             self._sett_prsrv_phss_auto_set_flag or
             self._sett_prsrv_coeffs_set_flag)
 
+        worst_case_flag = False
+
         for j in range(readjust_ft_iters):
 
             if self._sett_psc_rnd_col_flag:
@@ -1583,6 +1585,9 @@ class IAAFTSARealization(GTGAlgRealization):
 
                         sim_phs[0,:] = phs_spec_probs[0,:]
 
+                    if worst_case_flag:
+                        sim_phs[:,:] = sim_phs_margs[:, [0]]
+
                     if lock_phss_flag:
                         for k in range(self._data_ref_shape[1]):
                             sim_phs[self._rr.prsrv_phss_idxs_margs[:, k], k] = (
@@ -1627,6 +1632,9 @@ class IAAFTSARealization(GTGAlgRealization):
                             phs_spec_data - phs_spec_data[:, [stn_ctr]])
 
                         sim_phs[0,:] = phs_spec_data[0,:]
+
+                    if worst_case_flag:
+                        sim_phs[:,:] = sim_phs_probs[:, [stn_ctr]]
 
                     if lock_phss_flag:
                         for k in range(self._data_ref_shape[1]):

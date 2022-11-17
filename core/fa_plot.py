@@ -122,7 +122,7 @@ class IAAFTSAPlot(
 
         if self._vb:
             print(
-                f'Plotting preserved phases for {var_type} '
+                f'Plotting single-site preserved phases for {var_type} '
                 f'took {end_tm - beg_tm:0.2f} seconds.')
 
         return
